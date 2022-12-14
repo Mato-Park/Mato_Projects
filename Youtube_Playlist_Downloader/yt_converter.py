@@ -11,6 +11,7 @@ import urllib
 from io import BytesIO
 from PIL import Image
 from urllib import request
+import time
 
 target_url = ''
 
@@ -80,35 +81,69 @@ class MainWindow(QMainWindow):
         wid.setLayout(vbox)
 
 
+# class test(QThread):
+#     proc = pyqtSignal(str)
+
+#     def __init__(self):
+#         super().__init__()
+    
+#     def run(self):
+#         count = 0
+#         for i in range(0, 10):
+#             count += 1
+#             self.proc.emit('count')
+#             time.sleep(1)
+
 class MainContent(MainWindow):
-    add_sec_signal = pyqtSignal()
-    send_instance_signal = pyqtSignal('PyQt_PyObject')
+    # add_sec_signal = pyqtSignal()
+    # send_instance_signal = pyqtSignal('PyQt_PyObject')
 
     def __init__(self):
         super().__init__()
 
         self.search_button.clicked.connect(self.search)
 
+        self.search_url.textChanged[str].connect(self.title_update)
+
+        # self.test = test()
+        # # self.test.start()
+        # self.test.proc.connect(self.proc_)
+
         self.th_search = searcher(parent = self)
         self.th_search.updated_list.connect(self.list_update)
-        self.th_search.updated_label.connect(self.status_update)
+        # self.th_search.updated_label.connect(self.status_update)
 
         self.show()
 
-    @pyqtSignal()
+    # def start(self):
+    #     self.test.start()
+
+    # @pyqtSlot(str)
+    # def proc_(self, count):
+    #     self.video_list.insertItem(0, count)
+
+    def title_update(self, input):
+        global target_url
+        target_url = input
+        print(target_url)
+
+    # @pyqtSlot()
     def search(self):
         # self.video_list.insertItem(0, 'test')
         self.video_list.clear()
         self.th_search.start
 
-    @pyqtSignal(str)
+    @pyqtSlot(str)
     def list_update(self, msg):
-        self.video_list.addItem(msg)
+        # self.video_list.addItem(msg)
+        self.video_list.insertItem(0, msg)
         self.video_list.selectAll()
 
-    @pyqtSignal(str)
-    def status_update(self, msg):
-        self.status_label.setText(msg)
+    # @pyqtSignal(str)
+    # def status_update(self, msg):
+    #     self.status_label.setText(msg)
+
+
 
 class searcher(QThread):
     updated_list = pyqtSignal(str)
@@ -126,10 +161,10 @@ class searcher(QThread):
         global target_url
         global down_url_list
         global down_title_list
-
+        
         down_url_list = []
         down_title_list = []
-
+        
         if target_url != "":
             self.updated_label.emit("Reading Playlist lists...")
 
@@ -147,6 +182,7 @@ class searcher(QThread):
 
                         down_url_list.append(info_dict['entries'][i]['webpage_url'])
                         down_title_list.append(info_dict['entries'][i]['title'])
+                        
                 else:
                     video_title = info_dict.get('title', None)
                     self.updated_list.emit(video_title)
@@ -158,7 +194,7 @@ class searcher(QThread):
         
         else:
             self.updated_label.emit('Please Insert Playlist url')
-
+        
 
 
 app = QApplication(sys.argv)
