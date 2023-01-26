@@ -45,8 +45,36 @@ class InsertWindow(QMainWindow):
         hbox1.addWidget(self.label2)
         hbox1.addWidget(self.timeEdit1)
 
+        # Category 선택
+        self.label3 = QLabel("카테고리 설정: ", self)
+        self.categoryCombo = QComboBox(self)
+
+        db = psycopg2.connect(host = 'localhost', dbname = 'test', user = 'mato', port = 5432)
+        cursor = db.cursor()
+        query = """SELECT * FROM CATEGORY"""
+        cursor.execute(query)
+        type_tup = cursor.fetchall()
+        type_list = [i[1] for i in type_tup]
+        self.categoryCombo.addItems(type_list)
+
+        # 금액 입력
+        self.label4 = QLabel("금액 입력: ", self)
+        self.priceInput = QLineEdit(self)
+        self.priceInput.setMaxLength(10)
+        self.priceInput.setMaximumWidth(250)
+        self.label5 = QLabel("원(￦)", self)
+        self.label5.setMaximumWidth(50)
+
+        hbox2 = QHBoxLayout()
+        hbox2.addWidget(self.label3)
+        hbox2.addWidget(self.categoryCombo)
+        hbox2.addWidget(self.label4)
+        hbox2.addWidget(self.priceInput)
+        hbox2.addWidget(self.label5)
+
         vbox = QVBoxLayout()
         vbox.addLayout(hbox1)
+        vbox.addLayout(hbox2)
 
         wid.setLayout(vbox)
 
