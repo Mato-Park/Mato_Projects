@@ -24,7 +24,7 @@ class importText(QDialog):
     
     def setupUI(self):
         # db 연결
-        db = psycopg2.connect(host = 'localhost', dbname = 'test', user = 'mato', port = 5432)
+        db = psycopg2.connect(host = 'localhost', dbname = 'ledger', user = 'mato', port = 5432)
         cursor = db.cursor()
 
         # 미저장 데이터 가져오기
@@ -57,14 +57,14 @@ class importText(QDialog):
 
         self.label3 = QLabel("Payments: ", self)
         self.paymentsCombo = QComboBox(self)
-        query = """SELECT DISTINCT PAYMENTS_TYPE FROM PAYMENTS;"""
+        query = """SELECT DISTINCT PAYMENTS_NAME, PAYMENTS_ID FROM LEDGER.PAYMENTS ORDER BY PAYMENTS_ID ASC;"""
         cursor.execute(query)
         category = [i[0] for i in cursor.fetchall()]
         self.paymentsCombo.addItems(category)
 
         self.label4 = QLabel("Category: ", self)
         self.categoryCombo = QComboBox(self)
-        query = """SELECT * FROM CATEGORY;"""
+        query = """SELECT * FROM LEDGER.CATEGORY;"""
         cursor.execute(query)
         type_tup = cursor.fetchall()
         type_list = [i[1] for i in type_tup]
@@ -131,7 +131,7 @@ class importText(QDialog):
         cursor.close()
 
     def getButtonClicked(self):
-        db = psycopg2.connect(host = 'localhost', dbname = 'test', user = 'mato', port = 5432)
+        db = psycopg2.connect(host = 'localhost', dbname = 'ledger', user = 'mato', port = 5432)
         cursor = db.cursor()
         query = """SELECT id, date, time, ammounts, place FROM message.text_message WHERE SAVE_CHECK = FALSE;"""
         cursor.execute(query)
@@ -149,6 +149,9 @@ class importText(QDialog):
             i += 1
     
     def tableDoubleClicked(self):
+        global message_id
+        global row_number
+
         row = self.table1.currentIndex().row()
         date_format = "%Y-%m-%d"
         date = dt.datetime.strptime(self.table1.item(row, 1).text(), date_format)
@@ -161,17 +164,19 @@ class importText(QDialog):
         self.ammountsInput.setText(ammounts)
         place = self.table1.item(row, 4).text()
         self.lineEdit1.setText(place)
+        message_id = int(self.table1.item(row, 0).text())
+        row_number = self.table1.currentRow()
     
     def insertButtonClicked(self):
-        db = psycopg2.connect(host = 'localhost', dbname = 'test', user = 'mato', port = 5432)
+        db = psycopg2.connect(host = 'localhost', dbname = 'ledger', user = 'mato', port = 5432)
         cursor = db.cursor()
 
-        get_query1 = """SELECT DISTINCT PAYMENTS_ID, PAYMENTS_TYPE FROM PAYMENTS;"""
+        get_query1 = """SELECT DISTINCT PAYMENTS_ID, PAYMENTS_NAME FROM LEDGER.PAYMENTS;"""
         cursor.execute(get_query1)
         payments_tup = cursor.fetchall()
         payments_dict = dict(map(reversed, payments_tup))
         
-        get_query2 = """SELECT * FROM CATEGORY;"""
+        get_query2 = """SELECT * FROM LEDGER.CATEGORY;"""
         cursor.execute(get_query2)
         category = cursor.fetchall()
         category_dict = dict(map(reversed, category))
@@ -186,12 +191,18 @@ class importText(QDialog):
         payments = self.paymentsCombo.currentText()
         category = self.categoryCombo.currentText()
 
-        insert_query = f"""INSERT INTO public.TRANSACTION (trans_date, trans_time, day, type, category, amounts, memo, place, payments, user_id) 
+        insert_query = f"""INSERT INTO LEDGER.TRANSACTION (trans_date, trans_time, day, type, category, amounts, memo, place, payments) 
                         VALUES('{date}', '{time}', '{day[date2.weekday()]}', 2, '{category_dict[category]}', {ammounts}, '{memo}', '{place}',
-                         '{payments_dict[payments]}', 1);"""
+                         '{payments_dict[payments]}');"""
         cursor.execute(insert_query)
         cursor.execute("COMMIT")
+
+        insert_query2 = f"""UPDATE MESSAGE.TEXT_MESSAGE SET SAVE_CHECK = TRUE WHERE  ID = {message_id};"""
+        cursor.execute(insert_query2)
+        cursor.execute("COMMIT")
         cursor.close()
+
+        self.table1.removeRow(row_number)
 
 
     def exitButtonClicked(self):
