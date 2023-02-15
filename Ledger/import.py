@@ -34,7 +34,7 @@ class importText(QDialog):
         self.table1 = QTableWidget(self)
         self.table1.setRowCount(1)
         self.table1.setColumnCount(5)
-        self.table1.setColumnWidth(0, 30)
+        self.table1.setColumnWidth(0, 40)
         self.table1.setHorizontalHeaderLabels(('No', 'Date', 'Time', 'Ammounts', 'Place'))
         self.table1.setMinimumWidth(600)
         self.table1.setSortingEnabled(True)
@@ -242,9 +242,10 @@ class importDashboard(QMainWindow):
 
         # 테이블 생성
         self.selectTable1 = QTableWidget(self)
-        self.selectTable1.setRowCount(1)
+        # self.selectTable1.setRowCount(1)
         self.selectTable1.setColumnCount(6)
-        self.selectTable1.setColumnWidth(0, 30)
+        self.selectTable1.setColumnWidth(0, 40)
+        self.selectTable1.setHorizontalHeaderLabels(('No', 'Date', 'Time', 'Category', 'Ammounts', 'Place'))
 
         # 버튼 생성
         self.selectButton = QPushButton("조회하기", self)
@@ -252,6 +253,7 @@ class importDashboard(QMainWindow):
         self.inputButton = QPushButton("입력하기", self)
         self.exitButton = QPushButton("나가기", self)
 
+        self.selectButton.clicked.connect(self.selectButtonClicked)
         self.exitButton.clicked.connect(self.exitButtonClicked)
         self.getfromtextButton.clicked.connect(self.textButtonClicked)
         self.inputButton.clicked.connect(self.inputButtonClicked)
@@ -273,6 +275,41 @@ class importDashboard(QMainWindow):
         vbox.addLayout(hbox2)
 
         wid.setLayout(vbox)
+
+    def selectButtonClicked(self):
+        db = psycopg2.connect(host = 'localhost', dbname = 'ledger', user = 'mato', port = 5432)
+        cursor = db.cursor()
+
+        query = """
+                SELECT A.TRANS_ID,
+                        A.TRANS_DATE,
+                        A.TRANS_TIME,
+                        B.CATEGORY_NAME,
+                        A.AMOUNTS,
+                        A.PLACE
+                FROM
+                        LEDGER.TRANSACTION AS A
+                        JOIN
+                            LEDGER.CATEGORY AS B
+                            ON A.CATEGORY = B.CATEGORY_ID
+                ORDER BY A.TRANS_ID DESC;
+                """
+        cursor.execute(query)
+        self.results = cursor.fetchall()
+        self.selectTable1.setRowCount(len(self.results))
+
+        i = 0 
+        for row in self.results:
+            j = 0
+            for col in row:
+                item = QTableWidgetItem(str(col))
+                # item.setTextAlignment(Qt.AlignmentFlag.AlignCenter, Qt.AlignmentFlag.AlignVCenter)
+                self.selectTable1.setItem(i, j, item)
+                j += 1
+            i += 1
+
+        cursor.close()
+
 
     def inputButtonClicked(self):
         sg = self.geometry()
