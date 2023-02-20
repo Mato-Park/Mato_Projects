@@ -20,7 +20,7 @@ query = """SELECT text, handle.id, datetime((date / 1000000000) + 978307200, 'un
 handle.service, message.destination_caller_id, message.is_from_me, date((date/1000000000)+978307200, 'unixepoch', 'localtime')
 FROM message JOIN handle ON message.handle_id = handle.ROWID
 WHERE handle.id == '+8215447200' and message.is_from_me == 0 and 
-date((date/1000000000)+978307200, 'unixepoch', 'localtime') >= date('now', 'localtime', '-2 days')
+date((date/1000000000)+978307200, 'unixepoch', 'localtime') >= date('now', 'localtime', '-5 days')
 ORDER BY date asc"""
 
 rval = fetch_db_data(db_path, query)
