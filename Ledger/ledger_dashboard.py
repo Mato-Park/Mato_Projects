@@ -149,13 +149,20 @@ class Dashboard(QMainWindow):
         accum_consumption = pd.merge(accum_consumption, pd.DataFrame(results, columns = ['date2', 'amounts2']), left_index=True, right_index = True, how = 'left')
 
         fig = go.Figure()
-        fig.add_trace(go.Scatter(y = accum_consumption['amounts'], mode = 'lines', name = 'previous'))
-        fig.add_trace(go.Scatter(y = accum_consumption['amounts2'], mode = 'lines', name = 'current'))
-        fig.update_layout(title = 'Compare Consumption b/w previous and current months')
+        fig.add_trace(go.Scatter(y = accum_consumption['amounts'], mode = 'markers+lines', marker = dict(size = 5, color = 'black'), name = 'previous'))
+        fig.add_trace(go.Scatter(y = accum_consumption['amounts2'], mode = 'markers+lines', marker = dict(size = 5, color = 'red'), name = 'current'))
+        fig.update_layout(
+            go.Layout(
+                title = {'text': 'Compare Consumption b/w previous and current months',
+                         'font': {'color': 'black', 'size': 20}},
+                plot_bgcolor= 'white'
+            ))
+        fig.update_xaxes(showgrid = True, gridwidth = 0.1, gridcolor = '#eee')
+        fig.update_yaxes(showgrid = True, gridwidth = 0.1, gridcolor = '#eee')
 
         self.browser1 = QtWebEngineWidgets.QWebEngineView()
         self.browser1.setHtml(fig.to_html(include_plotlyjs = 'cdn'))
-
+        # Y축 label 수정, text message 추가, dashboard 배경색과 어울리지 않음
         components2 = QVBoxLayout()
         components2.addWidget(self.browser1)
 
