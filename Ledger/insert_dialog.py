@@ -140,11 +140,24 @@ class InsertWindow(QDialog):
         payments = self.paymentsCombo.currentText()
         category = self.categoryCombo.currentText()
 
-        insert_query = f"""INSERT INTO LEDGER.TRANSACTION (trans_date, trans_time, day, type, category, amounts, memo, place, payments) 
-                        VALUES('{date}', '{time}', '{day[date2.weekday()]}', 2, '{category_dict[category]}', {ammounts}, '{memo}', '{place}',
-                         '{payments_dict[payments]}');"""
-        cursor.execute(insert_query)
-        cursor.execute("COMMIT")
+        try:
+            insert_query = f"""INSERT INTO LEDGER.TRANSACTION (trans_date, trans_time, day, type, category, amounts, memo, place, payments) 
+                            VALUES('{date}', '{time}', '{day[date2.weekday()]}', 2, '{category_dict[category]}', {ammounts}, '{memo}', '{place}',
+                            '{payments_dict[payments]}');"""
+            cursor.execute(insert_query)
+            cursor.execute("COMMIT") # db.commit() 으로 바꿔보자 다음 번 입력 전에 test 필요
+
+            QMessageBox.about(self,'commit status', 'Commit Success!')
+            self.priceInput.clear()
+            self.lineEdit1.clear()
+            self.memoEdit.clear()
+
+        except (Exception, psycopg2.DatabaseError) as error:
+            db.rollback()
+
+            QMessageBox.about(self, 'commit status', f"Error in transaction, '{error}'")
+
+
 
     def exitButtonClicked(self):
         self.close()
