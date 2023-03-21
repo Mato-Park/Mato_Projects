@@ -145,7 +145,8 @@ class InsertWindow(QDialog):
                             VALUES('{date}', '{time}', '{day[date2.weekday()]}', 2, '{category_dict[category]}', {ammounts}, '{memo}', '{place}',
                             '{payments_dict[payments]}');"""
             cursor.execute(insert_query)
-            cursor.execute("COMMIT") # db.commit() 으로 바꿔보자 다음 번 입력 전에 test 필요
+            # cursor.execute("COMMIT") # db.commit() 으로 바꿔보자 다음 번 입력 전에 test 필요
+            db.commit()
 
             QMessageBox.about(self,'commit status', 'Commit Success!')
             self.priceInput.clear()
