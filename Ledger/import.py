@@ -191,19 +191,26 @@ class importText(QDialog):
         payments = self.paymentsCombo.currentText()
         category = self.categoryCombo.currentText()
 
-        insert_query = f"""INSERT INTO LEDGER.TRANSACTION (trans_date, trans_time, day, type, category, amounts, memo, place, payments) 
-                        VALUES('{date}', '{time}', '{day[date2.weekday()]}', 2, '{category_dict[category]}', {ammounts}, '{memo}', '{place}',
-                         '{payments_dict[payments]}');"""
-        cursor.execute(insert_query)
-        cursor.execute("COMMIT")
 
-        insert_query2 = f"""UPDATE MESSAGE.TEXT_MESSAGE SET SAVE_CHECK = TRUE WHERE  ID = {message_id};"""
-        cursor.execute(insert_query2)
-        cursor.execute("COMMIT")
-        cursor.close()
+        try:
+            insert_query = f"""INSERT INTO LEDGER.TRANSACTION (trans_date, trans_time, day, type, category, amounts, memo, place, payments) 
+                            VALUES('{date}', '{time}', '{day[date2.weekday()]}', 2, '{category_dict[category]}', {ammounts}, '{memo}', '{place}',
+                            '{payments_dict[payments]}');"""
+            cursor.execute(insert_query)
+            cursor.execute("COMMIT")
 
-        self.table1.removeRow(row_number)
+            insert_query2 = f"""UPDATE MESSAGE.TEXT_MESSAGE SET SAVE_CHECK = TRUE WHERE  ID = {message_id};"""
+            cursor.execute(insert_query2)
+            # cursor.execute("COMMIT")
+            db.commit()
+            cursor.close()
+            
+            QMessageBox.about(self,'commit status', 'Commit Success!')
+            self.table1.removeRow(row_number)
+        except (Exception, psycopg2.DatabaseError) as error:
+            db.rollback()
 
+            QMessageBox.about(self, 'commit status', f"Error in transaction, '{error}'")
 
     def exitButtonClicked(self):
         self.close()
