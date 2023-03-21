@@ -127,7 +127,7 @@ class messageDashboard(QMainWindow):
         self.label_duration = QLabel("Duration: ", self)
         self.label_duration.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.combo_duration = QComboBox(self)
-        combo_list = [str(i) for i in range(1, 10)]
+        combo_list = [str(i) for i in range(1, 16)]
         self.combo_duration.addItems(combo_list)
         self.combo_duration.setCurrentIndex(4)
         self.combo_duration.setMaximumWidth(100)
