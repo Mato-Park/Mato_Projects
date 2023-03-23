@@ -40,7 +40,7 @@ class Dashboard(QMainWindow):
         # fontDB.addApplicationFont('')
         self.label1.setFont(QFont('고딕체', 20))
 
-        month_first = dt.date(today.year, today.month, 1).strftime('%Y-%m-%d')
+        # month_first = dt.date(today.year, today.month, 1).strftime('%Y-%m-%d')
         # query = f"""SELECT TYPE, SUM(AMOUNTS) AS AMOUNT_SUM FROM LEDGER.TRANSACTION WHERE TRANS_DATE > '{month_first}' AND TYPE = 2 GROUP BY TYPE;"""
         query1 = """SELECT TYPE, SUM(AMOUNTS) AS AMOUNT_SUM FROM LEDGER.TRANSACTION WHERE TRANS_DATE >= DATE_TRUNC('MONTH', CURRENT_DATE) AND TYPE = 2 GROUP BY TYPE;"""
         cursor.execute(query1)
@@ -58,14 +58,36 @@ class Dashboard(QMainWindow):
         cursor.execute(query2)
         results2 = cursor.fetchall()
         self.income_per_month = QLabel(str(int(results2[0][0])) +"원")
-        self.label4 = QLabel("남은 금액: ", self)
-        self.left = QLabel("!!!!!!!원", self)
+        self.label4 = QLabel("주중/주말 평균 소비 금액: ", self)
+        query3 = """
+                WITH PAYS_PER_DAY AS
+                    (
+                        SELECT 
+                            TRANS_DATE,
+                            SUM(AMOUNTS)        AS AMOUNTS_PER_DAY
+                        FROM
+                            LEDGER.TRANSACTION
+                        WHERE
+                            TRANS_DATE >= DATE_TRUNC('MONTH', CURRENT_DATE) AND TYPE = 2
+                        GROUP BY TRANS_DATE
+                    )
+                SELECT
+                    CASE WHEN TO_CHAR(TRANS_DATE, 'D') IN ('1', '7') THEN 'WEEKEND' ELSE 'WEEKDAY' END AS WEEK, 
+                    AVG(AMOUNTS_PER_DAY)
+                FROM PAYS_PER_DAY
+                GROUP BY WEEK;
+                """
+        cursor.execute(query3)
+        results3 = cursor.fetchall()
+        self.left = QLabel(str(int(results3[0][1])) + " / " + str(int(results3[1][1])) + "원", self)
         # 주중 소비, 주말 소비 구하기
 
         # bullet_graph = bulletChart()
         # self.browser3 = QtWebEngineWidgets.QWebEngineView()
         # self.browser3.setHtml(bullet_graph.html)
         # self.browser3.setMaximumHeight(100)
+        # bullet chart 다 좋은데 horizontal 밖에 구현이 안돼...
+        # 대안으로 gauge chart로 그리거나 막대그래프로 그려야할 것 같음. horizontal은 보기에 좋지 않은듯
 
         components1 = QVBoxLayout()
         components1_1 = QHBoxLayout()
