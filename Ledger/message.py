@@ -18,6 +18,30 @@ def fetch_db_data(db, query):
     except Exception as e:
         sys.exit("Error reading the database: %s" %e)
 
+def text_message_split(text_number, message):
+    try:
+        if text_number == '+8215778000':
+            number = message[1]
+            text_original = message[0].replace('\n', ' ')
+            date = message[6]
+            time = message[0].split('\n')[2]
+            ammounts = int(message[0].split('\n')[5][:-1].replace(',', ''))
+            place = message[0].split('\n')[6][1:-1]
+            
+        elif text_number == '+8215447200':
+            number = message[1]
+            text_original = message[0]
+            date = message[6]
+            time = message[0].split(" ")[3]
+            ammounts = int(message[0].split(" ")[4][:-1].replace(',', ''))
+            place = message[0].split(" ")[5]
+        
+        result = {'number': number, 'text_original': text_original, 'date': date, 'time': time, 'ammounts': ammounts, 'place': place}
+
+        return result
+    except Exception as e:
+        sys.exit("Error : %s" %e)
+
 class registerNumber(QDialog):
     def __init__(self, mainWindowLeft, mainWindowTop):
         super().__init__()
@@ -255,21 +279,22 @@ class messageDashboard(QMainWindow):
 
             for i in rval:
                 try:
-                    number = i[1]
-                    text_original = i[0]
-                    date = i[6]
-                    time = i[0].split(" ")[3]
-                    ammounts = int(i[0].split(" ")[4][:-1].replace(',', ''))
-                    place = i[0].split(" ")[5]
+                    result = text_message_split(text_number, i)
+                    # number = i[1]
+                    # text_original = i[0]
+                    # date = i[6]
+                    # time = i[0].split(" ")[3]
+                    # ammounts = int(i[0].split(" ")[4][:-1].replace(',', ''))
+                    # place = i[0].split(" ")[5]
                     query = f"""INSERT INTO message.text_message (number, text_original, date, time, ammounts, place) 
-                                VALUES('{number}', '{text_original}', '{date}', '{time}', {ammounts}, '{place}')
+                                VALUES('{result['number']}', '{result['text_original']}', '{result['date']}', '{result['time']}', {int(result['ammounts'])}, '{result['place']}')
                                 ON CONFLICT (TEXT_ORIGINAL)
                                 DO NOTHING;"""
                     cursor.execute(query)
                     cursor.execute("COMMIT")
                     print("Insert Sucess!! ======================")
                 except Exception as e:
-                    QMessageBox.about(self, 'Fail!', 'Insert Fail!')
+                    QMessageBox.about(self, 'Fail!', f'{e}')
 
             QMessageBox.about(self, 'Good!', 'Success!!')
     
