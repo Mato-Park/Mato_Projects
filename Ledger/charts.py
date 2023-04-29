@@ -8,17 +8,19 @@ from PyQt6 import QtWebEngineWidgets
 import psycopg2
 import plotly.graph_objects as go
 import plotly.io as pio
+import plotly.colors as clrs
 
 class bulletChart:
     def __init__(self):
         db = psycopg2.connect(host = 'localhost', dbname = 'ledger', user = 'mato', port = 5432)
         cursor = db.cursor()
 
-        query = """SELECT
-                    SUM(AMOUNTS)      AS  AMOUNTS
+        query = """
+                SELECT
+                    SUM(AMOUNTS)    AS AMOUNTS
                 FROM
                     LEDGER.TRANSACTION
-                WHERE 
+                WHERE
                     TRANS_DATE >= DATE_TRUNC('MONTH', CURRENT_DATE) AND
                     TYPE = 2
                 ;
@@ -27,29 +29,106 @@ class bulletChart:
         results = cursor.fetchall()
         amounts = results[0][0] / 10000
 
-        fig = go.Figure(go.Indicator(
-            mode = "number+gauge+delta",
-            gauge = {
-                'shape': "bullet",
-                'axis' : {'range': [0, 200]},
-                'threshold' : {
-                    'line': {'color': "red", 'width': 5},
-                    'thickness': 0.75,
-                    'value': 150
-                },
-                'steps': [
-                    {'range': [0, 75], 'color': "lightgray"},
-                    {'range': [75, 150], 'color': "gray"}
-                ],
-                'bar': {'color': 'green'}
-                },
-            value = amounts,
-            delta = {'reference': 200, 'position': "left"},
-            domain = {'x': [0.1, 1], 'y': [0, 1]},
-            title = {'text': "<b>Consume</b><br><span style='color':gray; font-size:0.5em'>Kor. ₩</span>", 'font': {"size": 14}}
-        ))
-        fig.update_layout(height = 250)
+        fig = go.Figure()
+        fig['layout'].update(
+            dict(shapes = []),
+            barmode = 'stack',
+            height = 600,
+            width = 300,
+            showlegend = False,
+            annotations = []
+        )
+
+        width_axis = 'xaxis'
+        length_axis = 'yaxis'
+
+        for key in fig['layout']:
+            if 'xaxis' in key or 'yaxis' in key:
+                fig['layout'][key]['showgrid'] = False
+                fig['layout'][key]['zeroline'] = False
+            if length_axis in key:
+                fig['layout'][key]['tickwidth'] = 1
+            if width_axis in key:
+                fig['layout'][key]['showticklabels'] = False
+                fig['layout'][key]['range'] = [-0.5, 0.5]
+        
+        range_colors = ["rgb(200, 200, 200)", "rgb(245, 245, 245)"]
+        measure_colors = ["rgb(31, 119, 180)", "rgb(176, 196, 221)"]
+
+        range_n = [100, 150, 200]
+
+        for idx in range(len(range_n)):
+            # range bars: 배경이되는 range bars
+            inter_colors = clrs.n_colors(
+                range_colors[0], range_colors[1], len(range_n), 'rgb'
+            )
+
+            x = [0]
+            y = [sorted(range_n)[-1 -idx]]
+            bar = go.Bar(
+                x = x,
+                y = y,
+                marker = dict(color = inter_colors[-1 - idx]),
+                orientation = 'v',
+                hoverinfo = 'y',
+                base = 0,
+                width = 1
+            )
+            fig.add_trace(bar)
+
+        # measure bar: current value
+        bar = go.Bar(
+            x = x,
+            y = [amounts],
+            hoverinfo = 'y',
+            width = 0.4,
+            base = 0
+        )
+        fig.add_trace(bar)
+
         self.html = pio.to_html(fig, full_html = False, include_plotlyjs = 'cdn')
+
+# class bulletChart:
+#     def __init__(self):
+#         db = psycopg2.connect(host = 'localhost', dbname = 'ledger', user = 'mato', port = 5432)
+#         cursor = db.cursor()
+
+#         query = """SELECT
+#                     SUM(AMOUNTS)      AS  AMOUNTS
+#                 FROM
+#                     LEDGER.TRANSACTION
+#                 WHERE
+#                     TRANS_DATE >= DATE_TRUNC('MONTH', CURRENT_DATE) AND
+#                     TYPE = 2
+#                 ;
+#                 """
+#         cursor.execute(query)
+#         results = cursor.fetchall()
+#         amounts = results[0][0] / 10000
+
+#         fig = go.Figure(go.Indicator(
+#             mode = "number+gauge+delta",
+#             gauge = {
+#                 'shape': "bullet",
+#                 'axis' : {'range': [0, 200]},
+#                 'threshold' : {
+#                     'line': {'color': "red", 'width': 5},
+#                     'thickness': 0.75,
+#                     'value': 150
+#                 },
+#                 'steps': [
+#                     {'range': [0, 75], 'color': "lightgray"},
+#                     {'range': [75, 150], 'color': "gray"}
+#                 ],
+#                 'bar': {'color': 'green'}
+#                 },
+#             value = amounts,
+#             delta = {'reference': 200, 'position': "left"},
+#             domain = {'x': [0.1, 1], 'y': [0, 1]},
+#             title = {'text': "<b>Consume</b><br><span style='color':gray; font-size:0.5em'>Kor. ₩</span>", 'font': {"size": 14}}
+#         ))
+#         fig.update_layout(height = 250)
+#         self.html = pio.to_html(fig, full_html = False, include_plotlyjs = 'cdn')
 
 class donutChart:
     def __init__(self):

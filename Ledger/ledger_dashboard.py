@@ -82,13 +82,14 @@ class Dashboard(QMainWindow):
         self.left = QLabel(str(int(results3[0][1])) + " / " + str(int(results3[1][1])) + "원", self)
         # 주중 소비, 주말 소비 구하기
 
-        # bullet_graph = bulletChart()
-        # self.browser3 = QtWebEngineWidgets.QWebEngineView()
-        # self.browser3.setHtml(bullet_graph.html)
-        # self.browser3.setMaximumHeight(100)
+        bullet_graph = bulletChart()
+        self.browser3 = QtWebEngineWidgets.QWebEngineView()
+        self.browser3.setHtml(bullet_graph.html)
+        self.browser3.setMaximumWidth(300)
         # bullet chart 다 좋은데 horizontal 밖에 구현이 안돼...
         # 대안으로 gauge chart로 그리거나 막대그래프로 그려야할 것 같음. horizontal은 보기에 좋지 않은듯
 
+        components_upper = QHBoxLayout()
         components1 = QVBoxLayout()
         components1_1 = QHBoxLayout()
         components1_1.addWidget(self.label1)
@@ -108,6 +109,9 @@ class Dashboard(QMainWindow):
         components1.addLayout(components1_4)
         # components1.addWidget(self.browser3)
 
+        components_upper.addLayout(components1)
+        components_upper.addWidget(self.browser3)
+
         # Components2
 
         graph1 = compareChart()
@@ -123,7 +127,7 @@ class Dashboard(QMainWindow):
         components2.addWidget(self.browser2)
 
         vbox = QVBoxLayout()
-        vbox.addLayout(components1)
+        vbox.addLayout(components_upper)
         vbox.addLayout(components2)
 
         cursor.close()
