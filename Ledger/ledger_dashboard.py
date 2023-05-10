@@ -23,7 +23,22 @@ class Dashboard(QMainWindow):
         self.setGeometry(mainWindowLeft, mainWindowTop, mainWindowWidth, mainWindowHeight)
         self.setWindowTitle("PLedger_Dashboard v1.0")
 
+        # self._createMenuBar()
+
+        menu = self.menuBar()
+
+        file_menu = menu.addMenu("&File")
+        # file_menu.addAction()
+
         self.setupUI()
+
+    def _createMenuBar(self):
+        # menuBar = self.menuBar()
+        menuBar = QMenuBar(self)
+        self.setMenuBar(menuBar)
+
+        fileMenu = QMenu("&File", self)
+        menuBar.addMenu(fileMenu)
 
     def setupUI(self):
         wid = QWidget(self)
@@ -126,12 +141,24 @@ class Dashboard(QMainWindow):
         components2.addWidget(self.browser1)
         components2.addWidget(self.browser2)
 
+        # Components 3
+
+        self.exit_button = QPushButton("나가기", self)
+        self.exit_button.clicked.connect(self.exit_button_Clicked)
+
+        components3 = QHBoxLayout()
+        components3.addWidget(self.exit_button)
+
         vbox = QVBoxLayout()
         vbox.addLayout(components_upper)
         vbox.addLayout(components2)
+        vbox.addLayout(components3)
 
         cursor.close()
         wid.setLayout(vbox)
+
+    def exit_button_Clicked(self):
+        self.close()
 
 app = QApplication(sys.argv)
 window = Dashboard()
