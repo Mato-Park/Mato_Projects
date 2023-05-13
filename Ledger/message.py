@@ -115,7 +115,7 @@ class registerNumber(QDialog):
     def exitButtonClicked(self):
         self.close()
 
-class messageDashboard(QMainWindow):
+class messageDashboard(QDialog):
     def __init__(self):
 
         super().__init__()
@@ -131,8 +131,8 @@ class messageDashboard(QMainWindow):
         self.setupUI()
 
     def setupUI(self):
-        wid = QWidget(self)
-        self.setCentralWidget(wid)
+        # wid = QWidget(self)
+        # self.setCentralWidget(wid)
 
         # Title
         self.label1 = QLabel("Message Dashboard", self)
@@ -232,7 +232,8 @@ class messageDashboard(QMainWindow):
         vbox.addLayout(hbox2)
         vbox.addLayout(hbox3)
 
-        wid.setLayout(vbox)
+        # wid.setLayout(vbox)
+        self.setLayout(vbox)
 
     def numbershowButtonClicked(self):
         db = psycopg2.connect(host = 'localhost', dbname = 'ledger', user = 'mato', port = 5432)
@@ -372,11 +373,7 @@ class messageDashboard(QMainWindow):
             #     date = self.textTable.item(i, 1).text()
             #     print(number, date)
 
-
-            
-
-
-app = QApplication(sys.argv)
-window = messageDashboard()
-window.show()
-app.exec()
+# app = QApplication(sys.argv)
+# window = messageDashboard()
+# window.show()
+# app.exec()

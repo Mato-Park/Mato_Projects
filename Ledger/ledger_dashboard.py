@@ -9,6 +9,8 @@ import psycopg2
 import plotly.graph_objects as go
 import plotly.io as pio
 from charts import *
+from import_dialog import importDashboard
+from message import messageDashboard
 
 class Dashboard(QMainWindow):
     def __init__(self):
@@ -23,14 +25,35 @@ class Dashboard(QMainWindow):
         self.setGeometry(mainWindowLeft, mainWindowTop, mainWindowWidth, mainWindowHeight)
         self.setWindowTitle("PLedger_Dashboard v1.0")
 
-        # self._createMenuBar()
+        insert_button_action = QAction("&Write", self)
+        insert_button_action.setShortcut('Ctrl+W')
+        insert_button_action.triggered.connect(self.insertbuttonClicked)
+
+        message_button_action = QAction("&Get Message", self)
+        message_button_action.setShortcut('Ctrl+M')
+        message_button_action.triggered.connect(self.messagebuttonClicked)
+
+        exitAct = QAction("&Exit", self)
+        exitAct.setShortcut('Ctrl+Q')
+        # exitAct.setStatusTip('Exit Application')
+        exitAct.triggered.connect(self.exit_button_Clicked)
 
         menu = self.menuBar()
 
         file_menu = menu.addMenu("&File")
-        # file_menu.addAction()
+        file_menu.addAction(insert_button_action)
+        file_menu.addAction(message_button_action)
+        file_menu.addAction(exitAct)
 
         self.setupUI()
+    
+    def insertbuttonClicked(self):
+        importDialog = importDashboard()
+        importDialog.exec()        
+    
+    def messagebuttonClicked(self):
+        messageDialog = messageDashboard()
+        messageDialog.exec()
 
     def _createMenuBar(self):
         # menuBar = self.menuBar()
