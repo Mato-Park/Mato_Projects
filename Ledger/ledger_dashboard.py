@@ -80,11 +80,36 @@ class Dashboard(QMainWindow):
 
         # month_first = dt.date(today.year, today.month, 1).strftime('%Y-%m-%d')
         # query = f"""SELECT TYPE, SUM(AMOUNTS) AS AMOUNT_SUM FROM LEDGER.TRANSACTION WHERE TRANS_DATE > '{month_first}' AND TYPE = 2 GROUP BY TYPE;"""
-        query1 = """SELECT TYPE, SUM(AMOUNTS) AS AMOUNT_SUM FROM LEDGER.TRANSACTION WHERE TRANS_DATE >= DATE_TRUNC('MONTH', CURRENT_DATE) AND TYPE = 2 GROUP BY TYPE;"""
+        query1 = """SELECT 
+                        TYPE, 
+                        SUM(AMOUNTS) AS AMOUNT_SUM,
+                        MAX(TRANS_DATE) AS MAX_DATE 
+                    FROM 
+                        LEDGER.TRANSACTION 
+                    WHERE 
+                        TRANS_DATE >= DATE_TRUNC('MONTH', CURRENT_DATE) AND TYPE = 2 
+                    GROUP BY TYPE;"""
         cursor.execute(query1)
         test = cursor.fetchall()
+
+        max_date = test[0][2]
+        query1_1 = f"""
+                    SELECT
+                        TYPE,
+                        SUM(AMOUNTS) AS AMOUNT_SUM
+                    FROM
+                        LEDGER.TRANSACTION
+                    WHERE
+                        TRANS_DATE >= DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' MONTH)
+                        AND TRANS_DATE <= TO_DATE('{max_date}', 'YYYY-MM-DD') - INTERVAL '1' MONTH
+                    GROUP BY TYPE;
+                    """
+        cursor.execute(query1_1)
+        result1_1 = cursor.fetchall()
+
         self.label2 = QLabel("소비 합계: ", self)
-        self.payments_per_month = QLabel(str(test[0][1]) + "원")
+        self.payments_per_month = QLabel(str(test[0][1]) + "원(" + str(round(test[0][1] - result1_1[0][1], -3)/ 10000) + "만원)")
+
         self.label3 = QLabel("일별 소비: ", self)
         query2 = """
                 SELECT 
