@@ -108,7 +108,19 @@ class Dashboard(QMainWindow):
         result1_1 = cursor.fetchall()
 
         self.label2 = QLabel("소비 합계: ", self)
-        self.payments_per_month = QLabel(str(test[0][1]) + "원(" + str(round(test[0][1] - result1_1[0][1], -3)/ 10000) + "만원)")
+        # self.label2.setMaximumWidth(60)
+        self.payments_per_month = QLabel(str(test[0][1]) + "원")
+
+        if test[0][1] < result1_1[0][1]:
+            self.label2_2 = QLabel(f"지난 달 보다 {str(round(test[0][1] - result1_1[0][1], -3)/ 10000)}만원 덜 썼어요.")
+            self.label2_2.setStyleSheet("Color: green;")
+        else:
+            self.label2_2 = QLabel(f"지난 달 보다 {str(round(test[0][1] - result1_1[0][1], -3)/ 10000)}만원 더 썼어요.")
+            self.label2_2.setStyleSheet("Color: red;")
+        
+        # self.label2_2.setStyleSheet("background-color: red; Color: green;")
+        # self.label2_2.setFont(QFont('고딕체', 12))
+
 
         self.label3 = QLabel("일별 소비: ", self)
         query2 = """
@@ -168,6 +180,7 @@ class Dashboard(QMainWindow):
 
         components1.addLayout(components1_1)
         components1.addLayout(components1_2)
+        components1.addWidget(self.label2_2)
         components1.addLayout(components1_3)
         components1.addLayout(components1_4)
         # components1.addWidget(self.browser3)
