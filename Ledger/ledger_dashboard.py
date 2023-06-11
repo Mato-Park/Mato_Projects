@@ -80,6 +80,7 @@ class Dashboard(QMainWindow):
 
         # month_first = dt.date(today.year, today.month, 1).strftime('%Y-%m-%d')
         # query = f"""SELECT TYPE, SUM(AMOUNTS) AS AMOUNT_SUM FROM LEDGER.TRANSACTION WHERE TRANS_DATE > '{month_first}' AND TYPE = 2 GROUP BY TYPE;"""
+        self.label2 = QLabel("소비 합계: ", self)
         query1 = """SELECT 
                         TYPE, 
                         SUM(AMOUNTS) AS AMOUNT_SUM,
@@ -91,32 +92,37 @@ class Dashboard(QMainWindow):
                     GROUP BY TYPE;"""
         cursor.execute(query1)
         test = cursor.fetchall()
+        
+        # 이번 달 입력한 데이터가 없을 시 에러 발생 방지를 위하여 if 문 처리
+        if len(test) > 0:
+            max_date = test[0][2]
+            query1_1 = f"""
+                        SELECT
+                            TYPE,
+                            SUM(AMOUNTS) AS AMOUNT_SUM
+                        FROM
+                            LEDGER.TRANSACTION
+                        WHERE
+                            TRANS_DATE >= DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' MONTH)
+                            AND TRANS_DATE <= TO_DATE('{max_date}', 'YYYY-MM-DD') - INTERVAL '1' MONTH
+                        GROUP BY TYPE;
+                        """
+            cursor.execute(query1_1)
+            result1_1 = cursor.fetchall()
 
-        max_date = test[0][2]
-        query1_1 = f"""
-                    SELECT
-                        TYPE,
-                        SUM(AMOUNTS) AS AMOUNT_SUM
-                    FROM
-                        LEDGER.TRANSACTION
-                    WHERE
-                        TRANS_DATE >= DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' MONTH)
-                        AND TRANS_DATE <= TO_DATE('{max_date}', 'YYYY-MM-DD') - INTERVAL '1' MONTH
-                    GROUP BY TYPE;
-                    """
-        cursor.execute(query1_1)
-        result1_1 = cursor.fetchall()
+            # self.label2.setMaximumWidth(60)
+            self.payments_per_month = QLabel(str(test[0][1]) + "원")
 
-        self.label2 = QLabel("소비 합계: ", self)
-        # self.label2.setMaximumWidth(60)
-        self.payments_per_month = QLabel(str(test[0][1]) + "원")
-
-        if test[0][1] < result1_1[0][1]:
-            self.label2_2 = QLabel(f"지난 달 보다 {str(round(test[0][1] - result1_1[0][1], -3)/ 10000)}만원 덜 썼어요.")
-            self.label2_2.setStyleSheet("Color: green;")
+            if test[0][1] < result1_1[0][1]:
+                self.label2_2 = QLabel(f"지난 달 보다 {str(round(test[0][1] - result1_1[0][1], -3)/ 10000)}만원 덜 썼어요.")
+                self.label2_2.setStyleSheet("Color: green;")
+            else:
+                self.label2_2 = QLabel(f"지난 달 보다 {str(round(test[0][1] - result1_1[0][1], -3)/ 10000)}만원 더 썼어요.")
+                self.label2_2.setStyleSheet("Color: red;")
+        
         else:
-            self.label2_2 = QLabel(f"지난 달 보다 {str(round(test[0][1] - result1_1[0][1], -3)/ 10000)}만원 더 썼어요.")
-            self.label2_2.setStyleSheet("Color: red;")
+            self.payments_per_month = QLabel("- 원")
+            self.label2_2 = QLabel(" - ")
         
         # self.label2_2.setStyleSheet("background-color: red; Color: green;")
         # self.label2_2.setFont(QFont('고딕체', 12))
@@ -132,7 +138,12 @@ class Dashboard(QMainWindow):
                     TRANS_DATE >= DATE_TRUNC('MONTH', CURRENT_DATE) AND TYPE = 2;"""
         cursor.execute(query2)
         results2 = cursor.fetchall()
-        self.income_per_month = QLabel(str(int(results2[0][0])) +"원")
+
+        # 이번 달 입력한 데이터가 없을 시 에러 발생 방지를 위하여 if 문 처리
+        if len(results2) > 0:
+            self.income_per_month = QLabel(str(int(results2[0][0])) +"원")
+        else:
+            self.income_per_month = QLabel(" - 원")
         self.label4 = QLabel("주중/주말 평균 소비 금액: ", self)
         query3 = """
                 WITH PAYS_PER_DAY AS
@@ -154,15 +165,22 @@ class Dashboard(QMainWindow):
                 """
         cursor.execute(query3)
         results3 = cursor.fetchall()
-        self.left = QLabel(str(int(results3[0][1])) + " / " + str(int(results3[1][1])) + "원", self)
+        # 이번 달 입력한 데이터가 없을 시 에러 발생 방지를 위하여 if 문 처리
+        if len(results3) > 0:
+            self.left = QLabel(str(int(results3[0][1])) + " / " + str(int(results3[1][1])) + "원", self)
+        else:
+            self.left = QLabel( " - / - 원", self)
         # 주중 소비, 주말 소비 구하기
 
-        bullet_graph = bulletChart()
-        self.browser3 = QtWebEngineWidgets.QWebEngineView()
-        self.browser3.setHtml(bullet_graph.html)
-        self.browser3.setMaximumWidth(300)
+        try:
+            bullet_graph = bulletChart()
+            self.browser3 = QtWebEngineWidgets.QWebEngineView()
+            self.browser3.setHtml(bullet_graph.html)
+            self.browser3.setMaximumWidth(300)
         # bullet chart 다 좋은데 horizontal 밖에 구현이 안돼...
         # 대안으로 gauge chart로 그리거나 막대그래프로 그려야할 것 같음. horizontal은 보기에 좋지 않은듯
+        except (Exception ) as error:
+            self.browser3 = QLabel(f"Bullet Chart Error: {error}", self)
 
         components_upper = QHBoxLayout()
         components1 = QVBoxLayout()
@@ -189,25 +207,34 @@ class Dashboard(QMainWindow):
         components_upper.addWidget(self.browser3)
 
         # Components2
+        try:
+            graph1 = compareChart()
+            self.browser1 = QtWebEngineWidgets.QWebEngineView()
+            self.browser1.setHtml(graph1.html)
+        except (Exception) as error:
+            self.browser1 = QLabel(f"Trend Chart Error: {error}", self)
 
-        graph1 = compareChart()
-        self.browser1 = QtWebEngineWidgets.QWebEngineView()
-        self.browser1.setHtml(graph1.html)
-
-        graph2 = donutChart()
-        self.browser2 = QtWebEngineWidgets.QWebEngineView()
-        self.browser2.setHtml(graph2.html)
-
+        try:
+            graph2 = donutChart()
+            self.browser2 = QtWebEngineWidgets.QWebEngineView()
+            self.browser2.setHtml(graph2.html)
+        except (Exception) as error:
+            self.browser2 = QLabel(f"Trend Chart Error: {error}", self)
+        
         components2 = QHBoxLayout()
         components2.addWidget(self.browser1)
         components2.addWidget(self.browser2)
 
         # Components 3
 
+        self.refresh_button = QPushButton("새로초침(Refresh)", self)
+        self.refresh_button.clicked.connect(self.refresh_button_Clicked)
+
         self.exit_button = QPushButton("나가기", self)
         self.exit_button.clicked.connect(self.exit_button_Clicked)
 
         components3 = QHBoxLayout()
+        components3.addWidget(self.refresh_button)
         components3.addWidget(self.exit_button)
 
         vbox = QVBoxLayout()
@@ -217,6 +244,10 @@ class Dashboard(QMainWindow):
 
         cursor.close()
         wid.setLayout(vbox)
+
+    def refresh_button_Clicked(self):
+        # self.repaint()
+        self.browser1.update()
 
     def exit_button_Clicked(self):
         self.close()
