@@ -33,7 +33,7 @@ class bulletChart:
         fig['layout'].update(
             dict(shapes = []),
             barmode = 'stack',
-            height = 600,
+            height = 400,
             width = 300,
             showlegend = False,
             annotations = []
@@ -52,7 +52,7 @@ class bulletChart:
                 fig['layout'][key]['showticklabels'] = False
                 fig['layout'][key]['range'] = [-0.5, 0.5]
         
-        range_colors = ["rgb(200, 200, 200)", "rgb(245, 245, 245)"]
+        range_colors = ["rgb(76, 175, 80)", "rgb(255, 152, 0)", "rgb(244, 67, 54)"]
         measure_colors = ["rgb(31, 119, 180)", "rgb(176, 196, 221)"]
 
         range_n = [100, 150, 200]
@@ -68,7 +68,8 @@ class bulletChart:
             bar = go.Bar(
                 x = x,
                 y = y,
-                marker = dict(color = inter_colors[-1 - idx]),
+                # marker = dict(color = inter_colors[-1 - idx]),
+                marker = dict(color = range_colors[-1 - idx]),
                 orientation = 'v',
                 hoverinfo = 'y',
                 base = 0,
@@ -80,6 +81,7 @@ class bulletChart:
         bar = go.Bar(
             x = x,
             y = [amounts],
+            marker = dict(color = "rgb(33, 150, 243)"),
             hoverinfo = 'y',
             width = 0.4,
             base = 0
