@@ -28,7 +28,7 @@ def index():
             Transaction.date <= last_day.date()
         ).scalar() or 0
     
-    month_expense = db.session.query(func.sum(Transaction.amout))\
+    month_expense = db.session.query(func.sum(Transaction.amount))\
         .filter(
             Transaction.transaction_type == 'expense',
             Transaction.date >= first_day.date(),

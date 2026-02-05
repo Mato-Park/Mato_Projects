@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html language="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport", content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}박마토의 가계부{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}-{% endblock %}
+</head>
+<body>
+    <!-- 네비게이션 바 -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>💰 박마토의 가계부</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('main.index')}}" class="{% if request.endpoint == 'main.index' %}active{% endif %}">대시보드</a></li>
+                <li><a href="{{ url_for('transaction.list')}}" class="{% if 'transaction' in request.endpoint %}active{% endif %}">거래내역</a></li>
+                <li><a href="{{ url_for('transaction.add')}}" class="btn-primary">+ 거래추가</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 플래시 메시지 -->
+    {% with message = get_flashed_messages(with_categories=ture) %}
+        {% if messages %}
+            <div class="flash_messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                        <button class="close-btn" onclick="this.parentElement.remove()">*</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!--메인 콘텐츠-->
+    <main class="main-content">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!--푸터-->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 박마토의 가계부 만들기 프로젝트</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js')}}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

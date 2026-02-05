@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}대시보드 - 박마토의 가계부{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h2 class="page-title">{{ current_month }} 대시보드</h2>
+
+    <!--이번 달 요약-->
+    <div class="summary-cards">
+        <div class="card card-income">
+            <div class="card-header">
+                <span class="card-icon">💵</span>
+                <h3>이번 달 수입</h3>
+            </div>
+            <p class="card-amount">{{ "{:,}".format(month_income) }}원</p>
+        </div>
+
+        <div class="card card-expense">
+            <div class="card-header">
+                <span class="card-icon">💸</span>
+                <h3>이번 달 지출</h3>
+            </div>
+            <p class="card-amount">{{ "{:,}".format(month_expense) }}원</p>
+        </div>
+
+        <div class="card card-balance">
+            <div class="card-header">
+                <span class="card-icon">💰</span>
+                <h3>이번 달 잔액</h3>
+            </div>
+            <p class="card-amount {% if month_balance < 0 %}negative{% endif %}">
+                {{ "{:,}".format(month_balance) }}원
+            </p>
+        </div>
+    </div>
+
+    <!--전체 요약-->
+    <div class="summary-cards">
+        <div class="card">
+            <h4>총 수입</h4>
+            <p class="amount-text income-color">{{ "{:,}".format(total_income) }}원</p>
+        </div>
+
+        <div class="card">
+            <h4>총 지출</h4>
+            <p class="amount-text expense-color">{{ "{:,}".format(total_expense) }}원</p>
+        </div>
+
+        <div class="card">
+            <h4>총 잔액</h4>
+            <p class="amount-text {% if total_balance < 0 %}expense-color{% else %}income-color{% endif %}">
+                {{ "{:,}".format(total_balance) }}원
+            </p>
+        </div>
+    </div>
+
+    <!--카테고리별 지출 TOP 5-->
+    {% if top_categories %}
+    <div class="section">
+        <h3 class="section-title">이번 달 카테고리별 지출 Top 5</h3>
+        <div class="category-bars">
+            {% for category in top_categories %}
+            <div class="category-var-item">
+                <div class="category-info">
+                    <span class="category-color" style="background-color: {{ category.color }}"></span>
+                    <span class="category-name">{{ category.name }}</span>
+                </div>
+                <div class="bar-container">
+                    <div class="bar" style="width: {{ (category.amount_sum / top_categories[0].amount_sum * 100) }}%; background-color: {{ category.color }}">
+                    </div>
+                </div>
+                <span class="category-amount">{{ "{:,}".format(category.amount_sum) }}원</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!--최근 거래 내역-->
+    <div class="section">
+        <div class="section-header">
+            <h3 class="section-title">최근 거래 내역</h3>
+            <a href="{{ url_for('transaction.list') }}" class="btn-link">전체보기 →</a>
+        </div>
+
+        {% if recent_transactions %}
+        <div class="transaction_list">
+            {% for t in recent_transactions %}
+            <div class="transaction-item">
+                <div class="transaction-left">
+                    <span class="transaction-badge {{ t.transaction_type }}" >
+                        {{ '수입' if t.transaction_type == 'income' else '지출'}}
+                    </span>
+                    <div class="transaction_info">
+                        <p class="transaction_desc">{{ t.description }}</p>
+                        <p class="transaction_meta">
+                            {{ t.date.strftime('%Y-%m-%d') }} · {{ t.category.name }} · {{ t.payment_method.name }}
+                        </p>
+                    </div>
+                </div>
+                <div class="transaction-right">
+                    <p class="transaction-amount {{ t.transaction_type }}">
+                        {{ '+' if t.transaction_type == 'income' else '-' }}{{ "{:,}".format(t.amount) }}원
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-state">아직 거래 내역이 없습니다.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

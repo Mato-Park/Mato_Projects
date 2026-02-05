@@ -15,9 +15,10 @@ def create_app(config_name = 'development'):
     # 데이터베이스 초기화
     db.init_app(app)
 
-    # 블루프린트 등록(나중에 추가)
-    # from routes.main import main_bp
-    # app.register_blueprint(main_bp)
+    # 블루프린트 등록
+    from routes import main_bp, transaction_bp
+    app.register_blueprint(main_bp)
+    app.register_blueprint(transaction_bp)
 
     # 첫 실행 시, 데이터베이스 및 기본 데이터 생성
     with app.app_context():
@@ -54,18 +55,18 @@ def create_app(config_name = 'development'):
             print("✅ 기본 결제수단 생성 완료!")
     
     # 기본 라우트 (테스트용)
-    @app.route('/')
-    def index():
-        return """
-        <h1>🎉 박마토의 가계부 만들기</h1>
-        <p>환경 설정이 완료되었습니다!</p>
-        <ul>
-            <li>Flask 애플리케이션 실행 중 ✅</li>
-            <li>데이터베이스 연결 완료 ✅</li>
-            <li>기본 데이터 생성 완료 ✅</li>
-        </ul>
-        <p><strong>다음 단계:</strong> Phase 2 - CRUD 기능 구현</p>
-        """
+    # @app.route('/')
+    # def index():
+    #     return """
+    #     <h1>🎉 박마토의 가계부 만들기</h1>
+    #     <p>환경 설정이 완료되었습니다!</p>
+    #     <ul>
+    #         <li>Flask 애플리케이션 실행 중 ✅</li>
+    #         <li>데이터베이스 연결 완료 ✅</li>
+    #         <li>기본 데이터 생성 완료 ✅</li>
+    #     </ul>
+    #     <p><strong>다음 단계:</strong> Phase 2 - CRUD 기능 구현</p>
+    #     """
     
     return app
 
