@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}대시보드 - 박마토의 가계부{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <div class="page-header">
+        <h2 class="page-title">📊 통계 대시보드</h2>
+        <div class="month-selector">
+            <a href="{{ url_for('dashboard.overview', year=year, month=month-1 if month > 1 else 12) }}" class="btn btn-secondary">◀</a>
+            <span class="current-month">{{ year }}년 {{ month }}월</span>
+            <a href=" {{ url_for('dashboard.overview', year=year, month=month+1 if month < 12 else 1) }}" class="btn btn-secondary">▶</a>
+        </div>
+    </div>
+
+    <!-- 이번 달 요약 카드 -->
+    <div class="summary-cards">
+        <div class="card card-income">
+            <div class="card-header">
+                <span class="card-icon">💵</span>
+                <h3>이번 달 수입</h3>
+            </div>
+            <p class="card-amount">{{ "{:,}".format(monthly_summary.income) }}원</p>
+        </div>
+
+        <div class="card card-expense">
+            <div class="card-header">
+                <span class="card-icon">💸</span>
+                <h3>이번 달 지출</h3>
+            </div>
+            <p class="card-amount">{{ "{:,}".format(monthly_summary.expense) }}원</p>
+        </div>
+
+        <div class="card card-balance">
+            <div class="card-header">
+                <span class="card-icon">💰</span>
+                <h3>이번 달 잔액</h3>
+            </div>
+            <p class="card-amount {% if monthly_summary.balance < 0 %}negative{% endif %}">
+                {{ "{:,}".format(monthly_summary.balance) }}원
+            </p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">📈</span>
+                <h3>저축률</h3>
+            </div>
+            <p class="card-amount">{{ monthly_summary.savings_rate }}%</p>
+        </div>
+    </div>
+
+    <!-- 차트 그리드 -->
+    <div class="chart-grid">
+        <!-- Monthly Trend -->
+        <div class="chart-card full-width">
+            <h3 class="chart-title">월별 수입/지출 트렌드</h3>
+            <canvas id="trendChart"></canvas>
+        </div>
+
+        <!-- Expense Category -->
+        <div class="chart-card">
+            <h3 class="chart-title">지출 카테고리</h3>
+            <canvas id="expenseCategoryChart"></canvas>
+        </div>
+
+        <!-- 고정 vs 변동 지출 -->
+        <div class="chart-card">
+            <h3 class="chart-title">고정/변동 지출</h3>
+            <canvas id="fixedVariableChart"></canvas>
+        </div>
+
+        <!-- 결제 수단 -->
+         <div class="chart-card">
+            <h3 class="chart-title">결제수단별 사용액</h3>
+            <canvas id="paymentMethodChart"></canvas>
+         </div>
+
+         <!-- 수입 카테고리 -->
+          <div class="chart-card">
+            <h3 class="chart-title">수입 카테고리</h3>
+            <canvas id="incomeCategoryChart"></canvas>
+          </div>
+    </div>
+
+    <!-- 카테고리 상세 (지출) -->
+     {% if expense_categories %}
+     <div class="section">
+        <h3 class="section-title">지출 카테고리 상세</h3>
+        <div class="category-table">
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>카테고리</th>
+                        <th>금액</th>
+                        <th>거래 건수</th>
+                        <th>비율</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in expense_categories %}
+                    <tr>
+                        <td>
+                            <span class="category-dot" style="background-color: {{cat.color}}"></span> 
+                            {{ cat.name }}
+                        </td>
+                        <td class="amount">{{ "{:,}".format(cat.total) }}원</td>
+                        <td>{{ cat.count }}건</td>
+                        <td>
+                            <div class="percentage-bar">
+                                <div class="bar" style="width: {{ cat.percentage }}%; background-color: {{ cat.color }}"></div>
+                                <span>{{ cat.percentage }}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+     </div>
+     {% endif %}
+</div>
+
+<script>
+// chart data
+const monthlyTrend = {{ monthly_trend|safe }};
+const expenseCategories = {{ expense_categories|tojson|safe }};
+const incomeCategories = {{ income_categories|tojson|safe }};
+const paymentMethods = {{ payment_methods|tojson|safe }};
+const fixedVsVariable = {{ fixed_vs_variable|tojson|safe }};
+
+console.log('Monthly Trend:', monthlyTrend);
+console.log('Expense Categories', expenseCategories);
+console.log('Income Categories', incomeCategories);
+
+// Monthly Trend Chart
+const trendCtx = document.getElementById('trendChart').getContext('2d');
+new Chart(trendCtx, {
+    type: 'line',
+    data: {
+        labels: monthlyTrend.map(m => m.label),
+        datasets: [{
+            label: '수입',
+            data: monthlyTrend.map(m => m.income),
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.4
+        }, {
+            label: '지출',
+            data: monthlyTrend.map(m => m.expense),
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return value.toLocaleString() + '원';
+                    }
+                }
+            }
+        }
+    }
+});
+
+// 지출 카테고리 차트
+if (expenseCategories.length > 0) {
+    const expenseCatCtx = document.getElementById('expenseCategoryChart').getContext('2d');
+    new Chart(expenseCatCtx, {
+        type: 'doughnut',
+        data: {
+            labels: expenseCategories.map(c => c.name),
+            datasets: [{
+                data: expenseCategories.map(c => c.total),
+                backgroundColor: expenseCategories.map(c => c.color)
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+} else {
+    console.log('지출 카테고리 데이터 없음:', expenseCategories);
+}
+
+// Income Category Chart
+if (incomeCategories.length > 0) {
+    const incomeCatCtx = document.getElementById('incomeCategoryChart').getContext('2d');
+    new Chart(incomeCatCtx, {
+        type: 'doughnut',
+        data: {
+            labels: incomeCategories.map(c => c.name),
+            datasets: [{
+                data: incomeCategories.map(c => c.total),
+                backgroundColor: incomeCategories.map(c => c.color)
+            }]
+        },
+        options : {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+} else {
+    console.log('수입 카테고리 데이터 없음:', incomeCategories);
+}
+
+// 고정/변동 지출 차트
+const fixedVariableCtx = document.getElementById('fixedVariableChart').getContext('2d');
+if (fixedVariableCtx && fixedVsVariable){
+    new Chart(fixedVariableCtx, {
+        type: 'pie',
+        data: {
+            labels: ['고정지출', '변동지출'],
+            datasets: [{
+                data: [fixedVsVariable.fixed, fixedVsVariable.variable],
+                backgroundColor: ['#f59e0b', '#3b82f6']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+} else {
+    console.log('고정/변동 지출 데이터 없음:', fixedVsVariable);
+}
+
+
+// Payment Method Chart
+if (paymentMethods.length > 0) {
+    const pmCtx = document.getElementById('paymentMethodChart').getContext('2d');
+    new Chart(pmCtx, {
+        type: 'bar',
+        data: {
+            labels: paymentMethods.map(p => p.name),
+            datasets: [{
+                label: '사용액',
+                data: paymentMethods.map(p => p.total),
+                backgroundColor: '#6366f1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callblack: function(value) {
+                            return value.toLocaleString() + '원';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+</script>
+{% endblock %}

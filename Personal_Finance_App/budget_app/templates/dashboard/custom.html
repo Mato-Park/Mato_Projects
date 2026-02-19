@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}커스텀 기간 분석 - 박마토의 가계부{% endblock %}
+
+{% block content %}
+<div class="custom-analysis-page">
+    <div class="page-header">
+        <h2 class="page-title">🔎 커스텀 기간 분석</h2>
+    </div>
+
+    <!-- 기간 선택 -->
+    <div class="section">
+        <form method="GET" action="{{ url_for('dashboard.custom') }}" class="period-form">
+            <div class="period-inputs">
+                <div class="form-group">
+                    <label>시작일</label>
+                    <input type="date" name="start_date" value="{{ start_date }}" required>
+                </div>
+                <div class="form-group">
+                    <label>종료일</label>
+                    <input type="date" name="end_date" value="{{ end_date }}" required>
+                </div>
+                <button type="submit" class="btn btn-primary">조회</button>
+            </div>
+
+            <!-- 빠른 선택 버튼 -->
+            <div class="quick-select">
+                <span class="quick-label">빠른 선택:</span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="setDays(7)">최근 7일</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="setDays(30)">최근 30일</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="setDays(90)">최근 90일</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="setThisMonth()">이번 달</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="setLastMonth()">지난 달</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 요약 통계 -->
+    <div class="summary-cards">
+        <div class="card card-income">
+            <h3>총 수입</h3>
+            <p class="card-amount">{{ "{:,}".format(analysis_data.summary.total_income) }}원</p>
+        </div>
+
+        <div class="card card-expense">
+            <h3>총 지출</h3>
+            <p class="card-amount">{{ "{:,}".format(analysis_data.summary.total_expense) }}원</p>
+        </div>
+
+        <div class="card card-balance">
+            <h3>잔액</h3>
+            <p class="card-amount {% if analysis_data.summary.balance < 0 %}negative{% endif %}">
+                {{ "{:,}".format(analysis_data.summary.balance) }}원
+            </p>
+        </div>
+
+        <div class="card">
+            <h3>거래 건수</h3>
+            <p class="card-amount">{{ analysis_data.summary.transaction_count }}건</p>
+        </div>
+
+        <div class="card">
+            <h3>일평균 지출</h3>
+            <p class="card-amount">{{ "{:,}".format(analysis_data.summary.avg_daily_expense|round|int) }}원</p>
+        </div>
+    </div>
+
+    <!-- 카테고리별 분석 -->
+    {% if analysis_data.by_category %}
+    <div class="section">
+        <h3 class="section-title">카테고리별 지출</h3>
+        <div class="analysis-table">
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>카테고리</th>
+                        <th>총액</th>
+                        <th>건수</th>
+                        <th>평균</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in analysis_data.by_category %}
+                    <tr>
+                        <td><strong>{{ item.category }}</strong></td>
+                        <td class="amount">{{ "{:,}".format(item.total|int) }}원</td>
+                        <td>{{ item.count }}건</td>
+                        <td>{{ "{:,}".format(item.average|round|int) }}원</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 결제수단 별 분석 -->
+    {% if analysis_data.by_payment_method %}
+    <div class="section">
+        <h3 class="section-title">결제수단별 사용액</h3>
+        <div class="payment-bars">
+            {% set max_amount = analysis_data.by_payment_method|map(attribute='total')|max %}
+            {% for item in analysis_data.by_payment_method %}
+            <div class="payment-bar-item">
+                <div class="payment-name">{{ item.payment_method }}</div>
+                <div class="bar-container">
+                    <div class="bar" style="width: {{ (item.total / max_amount *100) if max_amount > 0 else 0}}%; background-color: #6366f1"></div>
+                </div>
+                <div class="payment-amount">{{ "{:,}".format(item.total|int) }}원</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 요일별 지출 패턴 -->
+    {% if analysis_data.by_weekday %}
+    <div class="section">
+        <h3 class="section-title">요일별 지출 패턴</h3>
+        <div class="weekday-chart">
+            {% set max_amount = analysis_data.by_weekday|map(attribute='total')|max %}
+            {% for item in analysis_data.by_weekday %}
+            <div class="weekday-bar-custom">
+                <div class="bar-fill" style="height: {{ (item.total / max_amount * 100) if max_amount > 0 else 0 }}%">
+                    <span class="bar-label">{{ "{:,}".format(item.total|int) }}</span>
+                </div>
+                <div class="weekday-label">{{ item.weekday[:3] }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 데이터 내보내기 -->
+    <div class="section">
+        <h3 class="section-title">데이터 내보내기</h3>
+        <div class="export-buttons">
+            <a href="{{ url_for('export.export_csv', start_date=start_date, end_date=end_date) }}" class="btn btn-primary">
+                📄 CSV로 내보내기
+            </a>
+            <a href="{{ url_for('export.export_excel', start_date=start_date, end_date=end_date) }}" class="btn btn-primary">
+               📊 Excel로 내보내기 
+            </a>
+        </div>
+    </div>
+
+    {% if not analysis_data.by_category %}
+    <div class="empty_state">
+        <p>선택한 기간에 데이터가 없습니다.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// 빠른 선택 함수들
+function setDays(days) {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    document.querySelector('input[name="start_date"]').value = startDate.toISOString().split('T')[0];
+    document.querySelector('input[name="end_date"]').value = endDate.toISOString().split('T')[0];
+}
+
+function setThisMonth() {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    document.querySelector('input[name="start_date"]').value = startDate.toISOString().split('T')[0];
+    documnet.querySelector('input[name="end_date"]').value = endDate.toISOString().split('T')[0];
+}
+
+function setLastMonth() {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    document.querySelector('input[name="start_date"]').value = startDate.toISOString().split('T')[0];
+    document.querySelector('input[name="end_date"]').value = endDate.toISOString().split('T')[0];
+}
+</script>
+{% endblock %}

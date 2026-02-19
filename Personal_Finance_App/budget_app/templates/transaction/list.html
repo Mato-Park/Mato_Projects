@@ -6,7 +6,12 @@
 <div class="trnasaction-page">
     <div class="page-header">
         <h2 class="pate-title">거래 내역</h2>
-        <a href="{{ url_for('transaction.add') }}" class="btn btn-primary">+ 거래 추가</a>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{{ url_for('export.export_csv', start_date=filters.start_date, end_date=filters.end_date, type=filters.type) }}" class="btn btn-secondary">📄 CSV</a>
+            <a href="{{ url_for('export.export_excel', start_date=filters.start_date, end_date=filters.end_date, type=filters.type)}}" class="btn btn-secondary">📊 Excel</a>
+            <a href="{{ url_for('transaction.add') }}" class="btn btn-primary">+ 거래 추가</a>
+        </div>
+        
     </div>
 
     <!--필터 섹션-->

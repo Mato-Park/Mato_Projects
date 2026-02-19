@@ -16,9 +16,11 @@ def create_app(config_name = 'development'):
     db.init_app(app)
 
     # 블루프린트 등록
-    from routes import main_bp, transaction_bp
+    from routes import main_bp, transaction_bp, dashboard_bp, export_bp
     app.register_blueprint(main_bp)
     app.register_blueprint(transaction_bp)
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(export_bp)
 
     # 첫 실행 시, 데이터베이스 및 기본 데이터 생성
     with app.app_context():

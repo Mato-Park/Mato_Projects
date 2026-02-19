@@ -225,13 +225,17 @@ body {
     background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
 }
 
+.card-balance {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
 .amount-text {
     font-size: 1.5rem;
     font-weight: 700;
     margin-top: 0.5rem;
 }
 
-.imagine-color {
+.income-color {
     color: var(--income-color);
 }
 
@@ -272,7 +276,7 @@ body {
     gap: 1rem;
 }
 
-.category-bar-items {
+.category-bar-item {
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -486,6 +490,7 @@ body {
 
 .summary-value {
     font-size: 1.5rem;
+    font-weight: 700;
 }
 
 /* ===== Table ===== */
@@ -769,6 +774,394 @@ body {
     text-align: center;
     color: var(--text-secondary);
     font-size: 0.875rem;
+}
+
+/* ===== Dashboard Chart ==== */
+.month-selector {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.current-month {
+    font-size: 1.125rem;
+    font-weight: 600;
+    min-width: 120px;
+    text-align: center;
+}
+
+.chart-card {
+    background: var(--surface);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.chart-card.full-width {
+    grid-column: 1 / -1;
+}
+
+.chart-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.stats-table thead {
+    background: var(--background);
+}
+
+.stats-table th {
+    padding: 0.75rem;
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.stats-table td {
+    padding: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.stats-table .amount {
+    font-weight: 600;
+}
+
+.category-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-left: 0.5rem;
+}
+
+.percentage-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.percentage-bar .bar {
+    height: 20px;
+    border-radius: 0.25rem;
+    min-width: 2px;
+}
+
+.percentage-bar span {
+    font-size: 0.875rem;
+    font-weight: 600;
+    min-width: 40px;
+}
+
+/* 고급 분석 페이지 스타일 */
+.comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.comparison-card {
+    background: var(--surface);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.comparison-card h4 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.comparison-values {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.current-value, .previous-value {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.current-value .amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.previous-value {
+    opacity: 0.7;
+}
+
+.previous-value .amount {
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.change-indicator {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.change-indicator.positive {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.change-indicator.negative {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.change-percentage {
+    font-size: 1.25rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.change-amount {
+    font-size: 0.875rem;
+}
+
+.pattern-section {
+    margin-bottom: 2rem;
+}
+
+.subsection-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.weekday-pattern {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.weekday-item {
+    display: grid;
+    grid-template-columns: 40px 1fr 120px 60px;
+    gap: 1rem;
+    align-items: center;
+}
+
+.weekday-name {
+    font-weight: 600;
+    text-align: center;
+}
+
+.weekday-bar-container {
+    height: 32px;
+    background: var(--background);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.weekday-bar {
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba3 100%);
+    border-radius: 0.5rem;
+    transition: width 0.5s ease;
+}
+
+.weekday-amount {
+    font-weight: 600;
+    text-align: right;
+}
+
+.weekday-count {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-align: right;
+}
+
+.week-pattern {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.week-item {
+    background: var(--background);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 120px;
+}
+
+.week-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.week-amount {
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.insight-section {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.insight-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.insight-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 0.5rem;
+    align-items: flex-start;
+}
+
+.insight-item.warning {
+    border-left: 4px solid #f59e0b;
+}
+
+.insight-item.positive {
+    border-left: 4px solid #10b981;
+}
+
+.insight-item.info {
+    border-left: 4px solid #3b82f6;
+}
+
+.insight-icon {
+    font-size: 1.5rem;
+}
+
+.insight-text {
+    flex: 1;
+    line-height: 1.5;
+}
+
+/* 🆕 커스텀 기간 분석 페이지 */
+.period-form {
+    background: var(--surface);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow);
+}
+
+.period-inputs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: flex-end;
+}
+
+.quick-select {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.quick-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.payment-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.payment-bar-item {
+    display: grid;
+    grid-template-columns: 120px 1fr 120px;
+    gap: 1rem;
+    align-items: center;
+}
+
+.payment-name {
+    font-weight: 600;
+}
+
+.payment-amount {
+    font-weight: 600;
+    text-align: right;
+}
+
+.weekday-chart {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 300px;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 0.5rem;
+}
+
+.weekday-bar-custom {
+    height: 100%;
+    border-radius: 0.5rem;
+    transition: width 0.5s ease;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;    
+    justify-content: flex-end;
+    gap: 0.5rem;
+    background: transparent;
+}
+
+.bar-fill {
+    width: 100%;
+    background: linear-gradient(180deg, #43e97b 0%, #38f9d7 100%);
+    border-radius: 0.5rem 0.5rem 0 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 0.5rem;
+    transition: height 0.5s ease;
+    position: relative;
+}
+
+.bar-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: black;
+}
+
+.weekday-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.export-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
 /* ===== Dymanics ===== */

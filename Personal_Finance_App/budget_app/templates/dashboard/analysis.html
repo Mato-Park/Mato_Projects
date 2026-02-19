@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}고급 분석 - 박마토의 가계부{% endblock %}
+
+{% block content %}
+<div class="analysis-page">
+    <div class="page-header">
+        <h2 class="page-title">📈 고급 분석</h2>
+        <div class="month-selector">
+            <a href="{{ url_for('dashboard.analysis', year=year, month=month-1 if month > 1 else 12) }}" class="btn btn-secondary">◀</a>
+            <span class="current-month">{{ year }}년 {{ month }}월</span>
+            <a href="{{ url_for('dashboard.analysis', year=year, momth=month if month < 12 else 1) }}" class="btn btn-secondary">▶</a>
+        </div>
+    </div>
+
+    <!-- MoM (전월 대비) 분석 -->
+    <div class="section">
+        <h3 class="section-title">📊 MoM (전월 대비) 분석</h3>
+
+        <div class="comparison-grid">
+            <!-- 수입 비교 -->
+            <div class="comparison-card">
+                <h4>💵 수입</h4>
+                <div class="comparison-values">
+                    <div class="current-value">
+                        <span class="label">이번 달</span>
+                        <span class="amount income-color">{{ "{:,}".format(mom_data.current.income) }}원</span>
+                    </div>
+                    <div class="previous-value">
+                        <span class="label">전월</span>
+                        <span class="amount">{{ "{:,}".format(mom_data.previous.income) }}원</span>
+                    </div>
+                </div>
+                <div class="change-indicator {% if mom_data.change.income >= 0 %}positive{% else %}negative{% endif %}">
+                    <span class="change-percentage">{{ "+" if mom_data.change.income >= 0 else "" }}{{ mom_data.change.income|round(1) }}%</span>
+                    <span class="change-amount">
+                        ({{ "+" if mom_data.change.income_diff >= 0 else ""}}{{ "{:,}".format(mom_data.change.income_diff) }}원)
+                    </span>
+                </div>
+            </div>
+
+            <!-- 지출 비교 -->
+            <div class="comparison-card">
+                <h4>💸 지출</h4>
+                <div class="comparison-values">
+                    <div class="current-value">
+                        <span class="label">이번 달</span>
+                        <span class="amount expense-color">{{ "{:,}".format(mom_data.current.expense) }}원</span>
+                    </div>
+                    <div class="previous-value">
+                        <span class="label">전월</span>
+                        <span class="amount">{{ "{:,}".format(mom_data.previous.expense) }}원</span>
+                    </div>
+                </div>
+                <div class="change-indicator {% if mom_data.change.expense <= 0 %}positive{% else %}negative{% endif %}">
+                    <span class="change-percentage">{{ "+" if mom_data.change.expense >= 0 else "" }}{{ mom_data.change.expense|round(1) }}%</span>
+                    <span class="change-amount">
+                        ({{ "+" if mom_data.change.expense_diff >= 0 else ""}}{{ "{:,}".format(mom_data.change.expense_diff) }}원)
+                    </span>
+                </div>
+            </div>
+
+            <!-- 잔액 비교 -->
+            <div class="comparison-card">
+                <h4>💰 잔액</h4>
+                <div class="comparison-values">
+                    <div class="current-value">
+                        <span class="label">이번 달</span>
+                        <span class="amount {% if mom_data.current.balance >= 0 %}income-color{% else %}expense-color{% endif %}">
+                            {{ "{:,}".format(mom_data.current.balance) }}원
+                        </span>
+                    </div>
+                    <div class="previous-value">
+                        <span class="label">전월</span>
+                        <span class="amount">{{ "{:,}".format(mom_data.previous.balance) }}원</span>
+                    </div>
+                </div>
+                <div class="change-indicator {% if (mom_data.current.balance - mom_data.previous.balance) >= 0 %}positive{% else %}negative{% endif %}">
+                    <span class="change-percentage">{{ "+" if mom_data.change.balance >= 0 else "" }}{{ mom_data.change.balance|round(1) }}%</span>
+                    <span class="change-amount">
+                        {{ "+" if (mom_data.current.balance - mom_data.previous.balance) >= 0 else "" }}
+                        {{ "{:,}".format(mom_data.current.balance - mom_data.previous.balance) }}원
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- YoY 전년 동월 대비 분석 -->
+    <div class="section">
+        <h3 class="section-title">📅 YoY (전년 동월 대비) 분석</h3>
+
+        <div class="comparison-grid">
+            <!-- 수입 비교 -->
+            <div class="comparison-card">
+                <h4>💵 수입</h4>
+                <div class="comparison-values">
+                    <div class="current-value">
+                        <span class="label">{{ year }}년 {{ month }}월</span>
+                        <span class="amount income-color">{{ "{:,}".format(yoy_data.current_year.income) }}원</span>
+                    </div>
+                    <div class="previous-value">
+                        <span class="label">{{ year - 1 }}년 {{ month }}월</span>
+                        <span class="amount">{{ "{:,}".format(yoy_data.previous_year.income) }}원</span>
+                    </div>
+                </div>
+                <div class="change-indicator {% if yoy_data.change.income >= 0 %}positive{% else %}negative{% endif %}">
+                    <span class="change-percentage">{{ "+" if yoy_data.change.income >= 0 else "" }}{{ yoy_data.change.income|round(1) }}%</span>
+                    <span class="change-amount">
+                        ( {{ "+" if yoy_data.change.income_diff >= 0 else "" }}{{ "{:,}".format(yoy_data.change.income_diff) }}원)
+                    </span>
+                </div>
+            </div>
+
+            <!-- 지출 비교 -->
+            <div class="comparison-card">
+                <h4>💸 지출</h4>
+                <div class="comparison-values">
+                    <div class="current-value">
+                        <span class="label">{{ year }}년 {{ month }}월</span>
+                        <span class="amount expense-color">{{ "{:,}".format(yoy_data.current_year.expense) }}원</span>
+                    </div>
+                    <div class="previous-value">
+                        <span class="label">{{ year -1 }}년 {{ month }}월</span>
+                        <span class="amount">{{ "{:,}".format(yoy_data.previous_year.expense) }}원</span>
+                    </div>
+                </div>
+                <div class="change-indicator {% if yoy_data.change.expense <= 0 %}positive{% else %}negative{% endif %}">
+                    <span class="change-percentage">{{ "+" if yoy_data.change.expense >= 0 else "" }}{{ yoy_data.change.expense|round(1) }}%</span>
+                    <span class="change-amount">
+                        ({{ "+" if yoy_data.change.expense_diff >= 0 else "" }}{{ "{:,}".format(yoy_data.change.expense_diff) }}원)
+                    </span>
+                </div>
+            </div>
+
+            <!-- 잔액 비교 -->
+            <div class="comparison-card">
+                <h4>💰 잔액</h4>
+                <div class="comparison-values">
+                    <div class="current-value">
+                        <span class="label">{{ year }}년 {{ month }}월</span>
+                        <span class="amount {% if yoy_data.current_year.balance >= 0 %}income-color{% else %}expense-color{% endif %}">
+                            {{ "{:,}".format(yoy_data.current_year.balance) }}원
+                        </span>
+                    </div>
+                    <div class="previous-value">
+                        <span class="label">{{ year - 1 }}년 {{ month }}월</span>
+                        <span class="amount">{{ "{:,}".format(yoy_data.previous_year.balance) }}원</span>
+                    </div>
+                </div>
+                <div class="change-indicator {% if (yoy_data.current_year.balance - yoy_data.previous_year.balance) >= 0 %}positive{% else %}negative{% endif %}">
+                    <span class="change-percentage">{{ "+" if yoy_data.change.balance >= 0 else "" }}{{ yoy_data.change.balance|round(1) }}%</span>
+                    <span class="change-amount">
+                        {{ "+" if (yoy_data.current_year.balance - yoy_data.previous_year.balance) >= 0 else ""}}
+                        {{ "{:,}".format(yoy_data.current_year.balance - yoy_data.previous_year.balance) }}원
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 지출 패턴 분석 -->
+    <div class="section">
+        <h3 class="section-title">🔍 지출 패턴 분석</h3>
+
+        <!-- 요일별 지출 패턴 -->
+        <div class="pattern-section">
+            <h4 class="subsection-title">요일별 평균 지출</h4>
+            <div class="weekday-pattern">
+                {% for item in spending_pattern.by_weekday %}
+                <div class="weekday-item">
+                    <div class="weekday-name">
+                        {{ {'Monday': '월', 'Tuesday': '화', 'Wednesday': '수', 'Thursday': '목', 'Friday': '금', 'Saturday': '토', 'Sunday': '일'}[item.weekday] }}
+                    </div>
+                    <div class="weekday-bar-container">
+                        {% set max_amount = spending_pattern.by_weekday|map(attribute='total')|max %}
+                        <div class="weekday-bar" style="width: {{ (item.total / max_amount * 100) if max_amount > 0 else 0 }}%"></div>
+                    </div>
+                    <div class="weekday-amount">{{ "{:,}".format(item.total) }}원</div>
+                    <div class="weekday-count">{{ item.count }}건</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 주차별 지출 -->
+        {% if spending_pattern.by_week %}
+        <div class="pattern-section">
+            <h4 class="subsection-title">주차별 지출</h4>
+            <div class="week-pattern">
+                {% for item in spending_pattern.by_week %}
+                <div class="week-item">
+                    <span class="week-label">{{ item.week }}주차</span>
+                    <span class="week-amount">{{ "{:,}".format(item.total) }}원</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 인사이트 -->
+    <div class="section insights-section">
+        <h3 class="section-title">💡 인사이트</h3>
+        <div class="insights-list">
+            {% if mom_data.change.expense > 10 %}
+            <div class="insight-item warning">
+                <span class="insight-icon">⚠️</span>
+                <span class="insight-text">전월 대비 지출이 {{ mom_data.change.expense|round(1) }}% 증가했습니다. 지출 관리가 필요합니다.</span>
+            </div>
+            {% endif %}
+
+            {% if mom_data.change.expense < -10 %}
+            <div class="insight-item positive">
+                <span class="insight-icon">✅</span>
+                <span class="insight-text">전월 대비 지출이 {{ mom_data.change.expense|round(1)|abs }}% 감소했습니다. 잘하고 있습니다!</span>
+            </div>
+            {% endif %}
+
+            {% if mom_data.current.balance < 0 %}
+            <div class="insight-item warning">
+                <span class="insight-icon">🚨</span>
+                <span class="insight-text">이번 달 수입보다 지출이 많습니다. 예산 관리가 필요합니다.</span>
+            </div>
+            {% endif %}
+
+            {% if spending_pattern.by_weekday %}
+            {% set max_weekday = spending_pattern.by_weekday|sort(attribute = 'total', reverse=true)|first %}
+            <div class="insight-item info">
+                <span class="insight-icon">📌</span>
+                <span class="insight-text">
+                    {{ {'Monday': '월요일', 'Tuesday': '화요일', 'Wednesday': '수요일', 'Thursday': '목요일', 'Friday': '금요일', 'Saturday': '토요일', 'Sunday': '일요일'}[max_weekday.weekday] }}에 
+                    가장 많은 지출({{ "{:,}".format(max_weekday.total) }}원)이 발생합니다.
+                </span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

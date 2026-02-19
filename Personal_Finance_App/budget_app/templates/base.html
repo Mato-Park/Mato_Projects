@@ -16,6 +16,9 @@
             </div>
             <ul class="nav-menu">
                 <li><a href="{{ url_for('main.index')}}" class="{% if request.endpoint == 'main.index' %}active{% endif %}">대시보드</a></li>
+                <li><a href="{{ url_for('dashboard.overview') }}" class="{% if 'dashboard' in request.endpoint %}active{% endif %}">통계</a></li>
+                <li><a href="{{ url_for('dashboard.analysis') }}" class="{% if request.endpoint == 'dashboard.analysis' %}active{% endif %}">고급분석</a></li>
+                <li><a href="{{ url_for('dashboard.custom') }}" class="{% if request.endpoint == 'dashboard.custom' %}active{% endif %}">커스텀</a></li>
                 <li><a href="{{ url_for('transaction.list')}}" class="{% if 'transaction' in request.endpoint %}active{% endif %}">거래내역</a></li>
                 <li><a href="{{ url_for('transaction.add')}}" class="btn-primary">+ 거래추가</a></li>
             </ul>
