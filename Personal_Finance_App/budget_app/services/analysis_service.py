@@ -8,7 +8,7 @@ class AnalysisService:
     """ Advanced Data Analysis Service """
 
     @staticmethod
-    def get_transaction_dataframe(start_date = None, end_date = None, transaction_type = None):
+    def get_transaction_dataframe(start_date = None, end_date = None, transaction_type = None, user_id = None):
         """
         거래 내역을 pandas dataframe으로 변환
 
@@ -16,6 +16,7 @@ class AnalysisService:
             start_date: 시작일 (datetime.date)
             end_date: 종료일 (datetime.date)
             transaction_type: 'income' or 'expense'
+            user_id: 사용자 ID
         """
         query = db.session.query(
             Transaction.transaction_id,
@@ -28,15 +29,19 @@ class AnalysisService:
             Category.name.label('category_name'),
             Category.color.label('category_color'),
             PaymentMethod.name.label('payment_method_name')
-        ).join(Category).join(PaymentMethod)
+        )
 
         # 필터 적용
+        if user_id:
+            query = query.filter(Transaction.user_id)
         if start_date:
             query = query.filter(Transaction.date >= start_date)
         if end_date:
             query = query.filter(Transaction.date <= end_date)
         if transaction_type:
             query = query.filter(Transaction.transaction_type == transaction_type)
+
+        query = query.join(Category).join(PaymentMethod)
 
         # Transform into dataframe
         results = query.all()
@@ -68,7 +73,7 @@ class AnalysisService:
         return df
     
     @staticmethod
-    def get_mom_comparison(year, month):
+    def get_mom_comparison(year, month, user_id = None):
         """
         MoM(Month Over Month) 비교 분석
         전월 대비 증감률
@@ -90,26 +95,26 @@ class AnalysisService:
                 prev_month_end = datetime(year, month, 1).date() - timedelta(days = 1)
 
         # current month data
-        current_income = db.session.query(func.sum(Transaction.amount))\
-            .filter(Transaction.transaction_type == 'income',
+        query_base = db.session.query(func.sum(Transaction.amount))
+        if user_id:
+            query_base.filter(Transaction.user_id == user_id)
+
+        current_income = query_base.filter(Transaction.transaction_type == 'income',
                     Transaction.date >= current_month_start,
                     Transaction.date <= current_month_end).scalar() or 0
         
-        current_expense = db.session.query(func.sum(Transaction.amount))\
-            .filter(Transaction.transaction_type == 'expense',
+        current_expense = query_base.filter(Transaction.transaction_type == 'expense',
                     Transaction.date >= current_month_start,
                     Transaction.date <= current_month_end).scalar() or 0
         
         current_balance = current_income - current_expense
         
         # prev month data
-        prev_income = db.session.query(func.sum(Transaction.amount))\
-            .filter(Transaction.transaction_type == 'income',
+        prev_income = query_base.filter(Transaction.transaction_type == 'income',
                     Transaction.date >= prev_month_start,
                     Transaction.date <= prev_month_end).scalar() or 0
         
-        prev_expense = db.session.query(func.sum(Transaction.amount))\
-            .filter(Transaction.transaction_type == 'expense',
+        prev_expense = query_base.filter(Transaction.transaction_type == 'expense',
                     Transaction.date >= prev_month_start,
                     Transaction.date <= prev_month_end).scalar() or 0
         
@@ -141,7 +146,7 @@ class AnalysisService:
         }
     
     @staticmethod
-    def get_yoy_comparison(year, month):
+    def get_yoy_comparison(year, month, user_id = None):
         """
         YoY (Year Over Year) 비교 분석 - 전년 동월 대비 증감률
         """
@@ -159,27 +164,27 @@ class AnalysisService:
         else:
             prev_year_end = datetime(year - 1, month + 1, 1).date() - timedelta(days = 1)
 
+        query_base = db.session.query(func.sum(Transaction.amount))
+        if user_id:
+            query_base.filter(Transaction.user_id == user_id)
+
         # current year data
-        current_income = db.session.query(func.sum(Transaction.amount))\
-            .filter(Transaction.transaction_type == 'income',
+        current_income = query_base.filter(Transaction.transaction_type == 'income',
                     Transaction.date >= current_start,
                     Transaction.date <= current_end).scalar() or 0
         
-        current_expense = db.session.query(func.sum(Transaction.amount))\
-            .filter(Transaction.transaction_type == 'expense',
+        current_expense = query_base.filter(Transaction.transaction_type == 'expense',
                     Transaction.date >= current_start,
                     Transaction.date <= current_end).scalar() or 0
         
         current_balance = current_income - current_expense
         
         # last year data
-        prev_income = db.session.query(func.sum(Transaction.amount))\
-            .filter(Transaction.transaction_type == 'income',
+        prev_income = query_base.filter(Transaction.transaction_type == 'income',
                     Transaction.date >= prev_year_start,
                     Transaction.date <= prev_year_end).scalar() or 0
 
-        prev_expense = db.session.query(func.sum(Transaction.amount))\
-            .filter(Transaction.transaction_type == 'expense',
+        prev_expense = query_base.filter(Transaction.transaction_type == 'expense',
                     Transaction.date >= prev_year_start,
                     Transaction.date <= prev_year_end).scalar() or 0
         
@@ -211,11 +216,12 @@ class AnalysisService:
         }
     
     @staticmethod
-    def get_custom_period_analysis(start_date, end_date):
+    def get_custom_period_analysis(start_date, end_date, user_id = None):
         """
         커스텀 기간 분석 (기간 선택?)
         """
-        df = AnalysisService.get_transaction_dataframe(start_date, end_date)
+        df = AnalysisService.get_transaction_dataframe(start_date = start_date, end_date = end_date, user_id = user_id)
+        print(len(df))
 
         if df.empty:
             return {
@@ -284,7 +290,7 @@ class AnalysisService:
         }
     
     @staticmethod
-    def get_spending_pattern_analysis(year, month):
+    def get_spending_pattern_analysis(year, month, user_id = None):
         """
         expense pattern analysis (daily, weekly, timely)
         """
@@ -294,7 +300,7 @@ class AnalysisService:
         else:
             end_date = datetime(year, month + 1, 1).date() - timedelta(days = 1)
 
-        df = AnalysisService.get_transaction_dataframe(start_date, end_date, 'expense')
+        df = AnalysisService.get_transaction_dataframe(start_date, end_date, 'expense', user_id)
 
         if df.empty:
             return {

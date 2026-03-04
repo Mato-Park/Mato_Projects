@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask_login import login_required, current_user
 from datetime import datetime
 import logging
 from models import Transaction, Category, PaymentMethod
@@ -14,6 +15,7 @@ Blueprint는 flask에서 라우트 관련 함수들을 그룹화하여 관리할
 """
 
 @transaction_bp.route('/')
+@login_required
 def list():
     """
     거래 내역 목록
@@ -27,8 +29,8 @@ def list():
     end_date = request.args.get('end_date', '')
     search = request.args.get('search', '')  # ?
 
-    # 기본 쿼리
-    query = Transaction.query
+    # 기본 쿼리 - 사용자 필터 추가
+    query = Transaction.query.filter(Transaction.user_id == current_user.user_id)
 
     # 필터 적용
     if transaction_type:
@@ -59,8 +61,8 @@ def list():
     ).all()
 
     # 필터용 데이터
-    categories = Category.query.order_by(Category.category_type, Category.name).all()
-    payment_methods = PaymentMethod.query.order_by(PaymentMethod.name).all()
+    categories = Category.query.filter(Category.user_id == current_user.user_id).order_by(Category.category_type, Category.name).all()
+    payment_methods = PaymentMethod.query.filter(PaymentMethod.user_id == current_user.user_id).order_by(PaymentMethod.name).all()
 
     # 통계용 데이터
     total_income = sum(t.amount for t in transactions if t.transaction_type == 'income')
@@ -83,6 +85,7 @@ def list():
                            })
 
 @transaction_bp.route('/add', methods = ['GET', 'POST'])
+@login_required
 def add():
     """
     Add a New Transaction
@@ -94,7 +97,7 @@ def add():
 
         try:
             transaction = Transaction(
-                user_id = 1,  # 임시 사용자 ID, Phase 1에서는 고정
+                user_id = current_user.user_id,  # 현재 사용자 ID
                 date = datetime.strptime(request.form['date'], '%Y-%m-%d').date(),
                 description = request.form['description'],
                 transaction_type = request.form['transaction_type'],
@@ -117,8 +120,8 @@ def add():
             flash(f'오류가 발생했습니다.: {str(e)}', 'danger')
 
     # GET 요청
-    categories = Category.query.order_by(Category.category_type, Category.name).all()
-    payment_methods = PaymentMethod.query.order_by(PaymentMethod.name).all()
+    categories = Category.query.filter(Category.user_id == current_user.user_id).order_by(Category.category_type, Category.name).all()
+    payment_methods = PaymentMethod.query.filter(PaymentMethod.user_id == current_user.user_id).order_by(PaymentMethod.name).all()
 
     return render_template('transaction/add.html',
                            categories = categories,
@@ -126,10 +129,14 @@ def add():
                            today = datetime.now().strftime('%Y-%m-%d'))
 
 @transaction_bp.route('/edit/<int:transaction_id>', methods = ['GET', 'POST'])
+@login_required
 def edit(transaction_id):
     """거래 내역 수정"""
 
-    transaction = Transaction.query.get_or_404(transaction_id)
+    transaction = Transaction.query.filter_by(
+        transaction_id = transaction_id,
+        user_id = current_user.user_id
+    ).get_or_404(transaction_id)
 
     if request.method == 'POST':
         try:
@@ -152,8 +159,8 @@ def edit(transaction_id):
             flash(f'오류가 발생했습니다: {str(e)}', 'error')
 
     # GET 요청
-    categories = Category.query.order_by(Category.category_type, Category.name).all()
-    payment_methods = PaymentMethod.query.order_by(PaymentMethod.name).all()
+    categories = Category.query.filter(Category.user_id == current_user.user_id).order_by(Category.category_type, Category.name).all()
+    payment_methods = PaymentMethod.query.filter(PaymentMethod.user_id == current_user.user_id).order_by(PaymentMethod.name).all()
 
     return render_template('transaction/edit.html',
                            transaction = transaction,
@@ -161,11 +168,15 @@ def edit(transaction_id):
                            payment_methods = payment_methods)
 
 @transaction_bp.route('/delete/<int:transaction_id>', methods = ['POST'])
+@login_required
 def delete(transaction_id):
     """거래 내역 삭제"""
 
     try:
-        transaction = Transaction.query.get_or_404(transaction_id)
+        transaction = Transaction.query.filter_by(
+            transaction_id = transaction_id,
+            user_id = current_user.id
+        ).get_or_404(transaction_id)
         db.session.delete(transaction)
         db.session.commit()
 

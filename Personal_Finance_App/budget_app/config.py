@@ -1,4 +1,5 @@
 import os
+import secrets
 
 # 프로젝트 루트 경로
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -14,11 +15,16 @@ class Config:
     Flask secret_key는 임의의 문자열(랜덤값)을 할당하여 설정함.
     Flask-Login 와 같은 확장 기능 사용 시 반드시 필요함.
     """
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    # SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
 
     # 데이터베이스 설정
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # WTForms 설정
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_TIME_LIMIT = None # CSRF 토큰 만료 없음
 
     # 페이지 당 항목 수 (페이지네이션)
     ITEMS_PER_PAGE = 20
@@ -38,7 +44,7 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     """
-    운영(프로덕션) 환경 설정
+    운영(프로덕션) 환경 설정 (나중에 사용)
     """
     DEBUG = False
     TESTING = False

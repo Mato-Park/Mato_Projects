@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request
+from flask_login import login_required, current_user
 from sqlalchemy import func, extract
 from datetime import datetime, timedelta
 from models import Transaction, Category, PaymentMethod
@@ -7,6 +8,7 @@ from utils.db import db
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
+@login_required
 def index():
     """
     Main Dashboard
@@ -23,6 +25,7 @@ def index():
     # 이번 달 수입/지출 계산
     month_income = db.session.query(func.sum(Transaction.amount))\
         .filter(
+            Transaction.user_id == current_user.user_id,  # 현재 사용자의 데이터만 조회
             Transaction.transaction_type == 'income',
             Transaction.date >= first_day.date(),
             Transaction.date <= last_day.date()
@@ -30,6 +33,7 @@ def index():
     
     month_expense = db.session.query(func.sum(Transaction.amount))\
         .filter(
+            Transaction.user_id == current_user.user_id,
             Transaction.transaction_type == 'expense',
             Transaction.date >= first_day.date(),
             Transaction.date <= last_day.date()
@@ -37,9 +41,15 @@ def index():
     
     # 전체 수입/지출 계산
     total_income = db.session.query(func.sum(Transaction.amount))\
-        .filter(Transaction.transaction_type == 'income').scalar() or 0
+        .filter(
+            Transaction.user_id == current_user.user_id,
+            Transaction.transaction_type == 'income'
+            ).scalar() or 0
     total_expense = db.session.query(func.sum(Transaction.amount))\
-        .filter(Transaction.transaction_type == 'expense').scalar() or 0
+        .filter(
+            Transaction.user_id == current_user.user_id,
+            Transaction.transaction_type == 'expense'
+            ).scalar() or 0
     
     # 최근 거래 내역 (10개)
     recent_ten_transactions = Transaction.query\
@@ -53,6 +63,7 @@ def index():
         func.sum(Transaction.amount).label('amount_sum')
     ).join(Transaction)\
     .filter(
+        Transaction.user_id == current_user.user_id,
         Transaction.transaction_type == 'expense',
         Transaction.date >= first_day.date(),
         Transaction.date <= last_day.date()

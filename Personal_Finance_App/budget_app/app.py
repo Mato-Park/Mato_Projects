@@ -1,6 +1,7 @@
 from flask import Flask
 from config import config
 from utils.db import db, init_db
+from flask_login import LoginManager
 
 def create_app(config_name = 'development'):
     """
@@ -15,12 +16,27 @@ def create_app(config_name = 'development'):
     # 데이터베이스 초기화
     db.init_app(app)
 
+    # Initialize Flask-Login
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login' # 로그인이 필요한 경우 리다이렉트할 페이지
+    login_manager.login_message = '이 페이지에 접근하려면 로그인이 필요합니다.'
+    login_manager.login_message_category = 'error'
+
+    # 사용자 로더
+    @login_manager.user_loader
+    def load_user(user_id):
+        from models import User
+        return User.query.get(int(user_id))
+
     # 블루프린트 등록
     from routes import main_bp, transaction_bp, dashboard_bp, export_bp
+    from routes.auth import auth_bp
     app.register_blueprint(main_bp)
     app.register_blueprint(transaction_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(export_bp)
+    app.register_blueprint(auth_bp)
 
     # 첫 실행 시, 데이터베이스 및 기본 데이터 생성
     with app.app_context():
@@ -30,31 +46,31 @@ def create_app(config_name = 'development'):
         db.create_all()
 
         # 기본 사용자 생성(Phase 1)
-        if User.query.count() == 0:
-            default_user = User(
-                username = '박마토',
-                email = 'dark1432@naver.com',
-                password_hash = 'temporary'  # Phase 5에서 암호화 적용
-            )
-            db.session.add(default_user)
-            db.session.commit()
-            print("✅ 기본 사용자 생성 완료!")
+        # if User.query.count() == 0:
+        #     default_user = User(
+        #         username = '박마토',
+        #         email = 'dark1432@naver.com',
+        #         password_hash = 'temporary'  # Phase 5에서 암호화 적용
+        #     )
+        #     db.session.add(default_user)
+        #     db.session.commit()
+        #     print("✅ 기본 사용자 생성 완료!")
 
-        # 기본 카테고리 생성
-        if Category.query.count() == 0:
-            for cat_data in Category.get_default_categorires():
-                category = Category(**cat_data, user_id = 1)
-                db.session.add(category)
-            db.session.commit()
-            print("✅ 기본 카테고리 생성 완료!")
+        # # 기본 카테고리 생성
+        # if Category.query.count() == 0:
+        #     for cat_data in Category.get_default_categorires():
+        #         category = Category(**cat_data, user_id = 1)
+        #         db.session.add(category)
+        #     db.session.commit()
+        #     print("✅ 기본 카테고리 생성 완료!")
 
-        # 기본 결제수단 생성
-        if PaymentMethod.query.count() == 0:
-            for pm_data in PaymentMethod.get_default_payment_method():
-                payment_method = PaymentMethod(**pm_data, user_id = 1)
-                db.session.add(payment_method)
-            db.session.commit()
-            print("✅ 기본 결제수단 생성 완료!")
+        # # 기본 결제수단 생성
+        # if PaymentMethod.query.count() == 0:
+        #     for pm_data in PaymentMethod.get_default_payment_method():
+        #         payment_method = PaymentMethod(**pm_data, user_id = 1)
+        #         db.session.add(payment_method)
+        #     db.session.commit()
+        #     print("✅ 기본 결제수단 생성 완료!")
     
     # 기본 라우트 (테스트용)
     # @app.route('/')

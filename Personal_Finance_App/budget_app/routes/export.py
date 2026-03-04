@@ -1,4 +1,5 @@
 from flask import Blueprint, request, send_file, flash, redirect, url_for
+from flask_login import login_required, current_user
 from datetime import datetime
 from io import BytesIO
 from services.analysis_service import AnalysisService
@@ -7,6 +8,7 @@ import pandas as pd
 export_bp = Blueprint('export', __name__, url_prefix = '/export')
 
 @export_bp.route('/csv')
+@login_required
 def export_csv():
     """
     export with csv files
@@ -24,7 +26,7 @@ def export_csv():
 
     try:
         # Get dataframe
-        df = AnalysisService.get_transaction_dataframe(start_date, end_date, transaction_type)
+        df = AnalysisService.get_transaction_dataframe(start_date, end_date, transaction_type, current_user.user_id)
         
         if df.empty:
             flash('내보낼 데이터가 없습니다.', 'error')
@@ -62,6 +64,7 @@ def export_csv():
         return redirect(url_for('transaction.list'))
     
 @export_bp.route('/excel')
+@login_required
 def export_excel():
     """
     download as excel file
@@ -80,7 +83,7 @@ def export_excel():
 
     try:
         # get dataframe
-        df = AnalysisService.get_transaction_dataframe(start_date, end_date, transaction_type)
+        df = AnalysisService.get_transaction_dataframe(start_date, end_date, transaction_type, current_user.user_id)
 
         if df.empty:
             flash('내보낼 데이터가 없습니다.', 'error')

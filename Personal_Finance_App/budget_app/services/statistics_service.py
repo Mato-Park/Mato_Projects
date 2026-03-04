@@ -8,7 +8,7 @@ class StatisticsService:
     """통계 계산 서비스"""
 
     @staticmethod
-    def get_monthly_summary(year = None, month = None):
+    def get_monthly_summary(year = None, month = None, user_id = None):
         """월별 요약 통계"""
         if year is None or month is None:
             today = datetime.now()
@@ -23,23 +23,24 @@ class StatisticsService:
             last_day = datetime(year, month + 1, 1) - timedelta(days = 1)
 
         # 수입/지출 계산
-        income = db.session.query(func.sum(Transaction.amount))\
-            .filter(
+        query_base = db.session.query(func.sum(Transaction.amount))
+        if user_id:
+            query_base.filter(Transaction.user_id == user_id)
+        
+        income = query_base.filter(
                 Transaction.transaction_type == 'income',
                 Transaction.date >= first_day,
                 Transaction.date <= last_day
             ).scalar() or 0
         
-        expense = db.session.query(func.sum(Transaction.amount))\
-            .filter(
+        expense = query_base.filter(
                 Transaction.transaction_type == 'expense',
                 Transaction.date >= first_day,
                 Transaction.date <= last_day
             ).scalar() or 0
 
         # 고정/변동 지출
-        fixed_expense = db.session.query(func.sum(Transaction.amount))\
-            .filter(
+        fixed_expense = query_base.filter(
                 Transaction.transaction_type == 'expense',
                 Transaction.is_fixed == True,
                 Transaction.date >= first_day,
@@ -60,7 +61,7 @@ class StatisticsService:
         }
 
     @staticmethod
-    def get_yearly_summary(year = None):
+    def get_yearly_summary(year = None, user_id = None):
         """연도별 요약 통계"""
         if year is None:
             year = datetime.now().year
@@ -68,15 +69,17 @@ class StatisticsService:
         first_day = datetime(year, 1, 1).date()
         last_day = datetime(year, 12, 31).date()
 
-        income = db.session.query(func.sum(Transaction.amount))\
-            .filter(
+        query_base = db.session.query(func.sum(Transaction.amount))
+        if user_id:
+            query_base.filter(Transaction.user_id == user_id)
+
+        income = query_base.filter(
                 Transaction.transaction_type == 'income',
                 Transaction.date >= first_day,
                 Transaction.date <= last_day
             ).scalar() or 0
         
-        expense = db.session.query(func.sum(Transaction.amount))\
-            .filter(
+        expense = query_base.filter(
                 Transaction.transaction_type == 'expense',
                 Transaction.date >= first_day,
                 Transaction.date <= last_day,
@@ -90,7 +93,7 @@ class StatisticsService:
         }
     
     @staticmethod
-    def get_monthly_trend(months = 12):
+    def get_monthly_trend(months = 12, user_id = None):
         """월별 트렌드 (최근 N개월)"""
         results = []
         today = datetime.now()
@@ -100,7 +103,7 @@ class StatisticsService:
             year = target_date.year
             month = target_date.month
 
-            summary = StatisticsService.get_monthly_summary(year, month)
+            summary = StatisticsService.get_monthly_summary(year, month, user_id)
             results.append({
                 'label': f'{year}-{month:02d}',
                 'year': year,
@@ -113,16 +116,20 @@ class StatisticsService:
         return results
     
     @staticmethod
-    def get_category_analysis(transaction_type = 'expense', year = None, month = None):
+    def get_category_analysis(transaction_type = 'expense', year = None, month = None, user_id = None):
         """카테고리 별 분석"""
         query = db.session.query(
+            Category.user_id,
             Category.category_id,
             Category.name,
             Category.color,
             func.sum(Transaction.amount).label('total'),
             func.count(Transaction.transaction_id).label('count')
-        ).join(Transaction)\
-        .filter(Transaction.transaction_type == transaction_type)
+        ).filter(Category.user_id == user_id)\
+            .join(Transaction)\
+            .filter(
+            Transaction.user_id == user_id,
+            Transaction.transaction_type == transaction_type)
 
         # 기간 필터
         if year and month:
@@ -152,15 +159,17 @@ class StatisticsService:
         } for r in results]
     
     @staticmethod
-    def get_payment_method_analysis(year = None, month = None):
+    def get_payment_method_analysis(year = None, month = None, user_id = None):
         """결제수단 별 분석"""
         query = db.session.query(
+            PaymentMethod.user_id,
             PaymentMethod.payment_method_id,
             PaymentMethod.name,
             PaymentMethod.payment_method_type,
             func.sum(Transaction.amount).label('total'),
             func.count(Transaction.transaction_id).label('count')
-        ).join(Transaction)
+        ).filter(PaymentMethod.user_id == user_id)\
+            .join(Transaction).filter(Transaction.user_id == user_id)
 
         # 기간 필터
         if year and month:
@@ -191,7 +200,7 @@ class StatisticsService:
         } for r in results]
     
     @staticmethod
-    def get_daily_expenses(year, month):
+    def get_daily_expenses(year, month, user_id = None):
         """일별 지출 (히트맵용)"""
         first_day = datetime(year, month, 1).date()
         if month == 12:
@@ -203,6 +212,7 @@ class StatisticsService:
             Transaction.date,
             func.sum(Transaction.amount).label('total')
         ).filter(
+            Transaction.user_id == user_id,
             Transaction.transaction_type == 'expense',
             Transaction.date >= first_day,
             Transaction.date <= last_day
@@ -215,10 +225,12 @@ class StatisticsService:
         return daily_data
     
     @staticmethod
-    def get_fixed_vs_variable(year = None, month = None):
+    def get_fixed_vs_variable(year = None, month = None, user_id = None):
         """고정지출 vs 변동지출"""
         query_base = db.session.query(func.sum(Transaction.amount))\
-                                .filter(Transaction.transaction_type == 'expense')
+                                .filter(
+                                    Transaction.user_id == user_id,
+                                    Transaction.transaction_type == 'expense')
         
         if year and month:
             first_day = datetime(year, month, 1).date()

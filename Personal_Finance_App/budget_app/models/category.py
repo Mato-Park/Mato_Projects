@@ -35,7 +35,7 @@ class Category(db.Model):
         }
     
     @staticmethod
-    def get_default_categorires():
+    def get_default_categories():
         """
         기본 카테고리 목록
         """

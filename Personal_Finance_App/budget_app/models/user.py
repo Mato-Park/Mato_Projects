@@ -1,7 +1,9 @@
 from datetime import datetime, timezone
 from utils.db import db
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     """
     사용자 모델 (추후 활성화)
     """
@@ -30,6 +32,18 @@ class User(db.Model):
     transactions = db.relationship('Transaction', back_populates = 'user', lazy = 'select', cascade = 'all, delete-orphan')  # select - lazy loading, 객체에 처음 접근할 때, SELECT 쿼리 실행
     categories = db.relationship('Category', back_populates = 'user', lazy = 'select', cascade = 'all, delete-orphan')
     payment_methods = db.relationship('PaymentMethod', back_populates = 'user', lazy = 'select', cascade = 'all, delete-orphan')
+
+    def get_id(self):
+        """Flask-Login에서 사용하는 ID"""
+        return str(self.user_id)
+    
+    def set_password(self, password):
+        """비밀번호를 해시화하여 저장"""
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        """비밀번호가 맞는지 확인"""
+        return check_password_hash(self.password_hash, password)
 
     def __repr__(self):  # 객체의 "공식적인" 문자열 표현을 계산하기 위해 사용되는 메서드
         return f"<User {self.username}>"
